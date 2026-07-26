@@ -27,9 +27,6 @@ services:
       - REDIS_HOST=127.0.0.1
       - REDIS_PORT=6379
       - MEILISEARCH_HOST=http://127.0.0.1:7700
-    networks:
-      newznab-net:
-        ipv4_address: ${CONTAINER_IP:-172.20.0.10}
     labels:
       - "com.example.description=Newznab-tmux All-in-One Usenet Indexer"
     healthcheck:
@@ -54,10 +51,3 @@ volumes:
     driver: local
   newznab-logs:
     driver: local
-
-networks:
-  newznab-net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: ${CONTAINER_SUBNET:-172.20.0.0/16}
