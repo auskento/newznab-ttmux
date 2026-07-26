@@ -186,8 +186,9 @@ if [ ! -f "$SETUP_FILE" ]; then
     echo ""
 
     # Stop supervisord and let it restart fresh
+    # Allow sufficient time for sockets and ports to fully release
     kill $SUPERVISOR_PID
-    sleep 5
+    sleep 10
 fi
 
 # ============================================================================
