@@ -94,7 +94,9 @@ Recommended Requirements:
   <!-- User Configuration -->
   <Config Name="Web Port" Target="8080" Default="8080" Mode="rw" Type="Port" Display="always" Required="true" Description="Port for web interface (optional, can use static IP instead)">8080</Config>
 
-  <Config Name="Container Static IP" Target="CONTAINER_IP" Default="172.20.0.10" Mode="rw" Type="Variable" Display="always" Required="false" Description="Static IP for container (e.g., 172.20.0.10). Leave blank to use port binding only. Must be within 172.20.0.0/16 subnet">172.20.0.10</Config>
+  <Config Name="Container Network Subnet" Target="CONTAINER_SUBNET" Default="172.20.0.0/16" Mode="rw" Type="Variable" Display="always" Required="false" Description="Docker network subnet (e.g., 172.20.0.0/16 or 192.168.9.0/24). Match your Unraid bridge network">172.20.0.0/16</Config>
+
+  <Config Name="Container Static IP" Target="CONTAINER_IP" Default="172.20.0.10" Mode="rw" Type="Variable" Display="always" Required="false" Description="Static IP for container (e.g., 172.20.0.10 or 192.168.9.225). Must be within the subnet above">172.20.0.10</Config>
 
   <Config Name="Appdata Path" Target="/mnt/user/appdata/newznab/" Default="/mnt/user/appdata/newznab/" Mode="rw" Type="Path" Display="always" Required="true" Description="Path for application data, database, cache, and all services">/mnt/user/appdata/newznab/</Config>
 
