@@ -5,7 +5,6 @@
 docker-compose.yml
 Dockerfile
 .env
-.env.example
 README.md
 .dockerignore
 node_modules
