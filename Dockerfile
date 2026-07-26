@@ -9,8 +9,11 @@ FROM ubuntu:22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build dependencies
+# Add PHP 8.3 repository and install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    && add-apt-repository ppa:ondrej/php -y \
+    && apt-get update && apt-get install -y --no-install-recommends \
     # Version control
     git \
     # Build tools
@@ -18,16 +21,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     wget \
     ca-certificates \
-    # PHP and build tools
-    php-cli \
-    php-pdo-mysql \
-    php-curl \
-    php-gd \
-    php-zip \
-    php-intl \
-    php-mbstring \
-    php-xml \
-    php-bcmath \
+    # PHP 8.3 and build tools
+    php8.3-cli \
+    php8.3-pdo-mysql \
+    php8.3-curl \
+    php8.3-gd \
+    php8.3-zip \
+    php8.3-intl \
+    php8.3-mbstring \
+    php8.3-xml \
+    php8.3-bcmath \
     composer \
     # Node.js for frontend build
     nodejs \
