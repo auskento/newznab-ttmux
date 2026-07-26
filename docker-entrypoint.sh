@@ -379,6 +379,14 @@ EOF
 fi
 
 # ============================================================================
+# Clear cache before starting services
+# ============================================================================
+echo "🧹 Clearing application cache..."
+rm -f /config/bootstrap-cache/*.php 2>/dev/null || true
+cd /var/www/newznab && php artisan config:clear 2>/dev/null || true
+cd /var/www/newznab && php artisan cache:clear 2>/dev/null || true
+
+# ============================================================================
 # Configure and start services with Supervisor
 # ============================================================================
 echo "🔧 Starting services..."
