@@ -323,13 +323,7 @@ EOF
     if [ $TABLES_EXIST -eq 1 ]; then
         if ! mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES LIKE 'cache_locks'" 2>/dev/null | grep -q cache_locks; then
             echo "  Creating cache_locks table..."
-            mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "CREATE TABLE IF NOT EXISTS cache_locks (
-  key varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  owner varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  expiration int NOT NULL,
-  PRIMARY KEY (key),
-  KEY cache_locks_expiration_index (expiration)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;" 2>&1 || true
+            mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "CREATE TABLE IF NOT EXISTS cache_locks (key varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL, owner varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL, expiration int NOT NULL, PRIMARY KEY (key), KEY cache_locks_expiration_index (expiration)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;" 2>&1 || true
             echo "  ✓ cache_locks table created"
         fi
     fi
