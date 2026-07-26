@@ -37,22 +37,24 @@ if [ ! -f "$CREDENTIALS_FILE" ]; then
     APP_KEY=$(openssl rand -base64 32 | tr -d '\n=')
 
     # Update .env file with generated credentials
-    if [ -f "/var/www/newznab/.env" ]; then
-        # Use grep -v to remove old values, then append new ones
-        grep -v "^DB_HOST=" /var/www/newznab/.env > /tmp/.env.tmp
-        grep -v "^DB_USERNAME=" /tmp/.env.tmp > /var/www/newznab/.env
-        grep -v "^DB_PASSWORD=" /var/www/newznab/.env > /tmp/.env.tmp
-        grep -v "^MEILISEARCH_KEY=" /tmp/.env.tmp > /var/www/newznab/.env
-        grep -v "^APP_KEY=" /var/www/newznab/.env > /tmp/.env.tmp
-        mv /tmp/.env.tmp /var/www/newznab/.env
+    if [ ! -f "/var/www/newznab/.env" ] && [ -f "/var/www/newznab/.env.example" ]; then
+        cp /var/www/newznab/.env.example /var/www/newznab/.env
+    fi
 
-        # Append new values
-        echo "" >> /var/www/newznab/.env
-        echo "DB_HOST=127.0.0.1" >> /var/www/newznab/.env
-        echo "DB_USERNAME=newznab" >> /var/www/newznab/.env
-        echo "DB_PASSWORD=$DB_PASSWORD" >> /var/www/newznab/.env
-        echo "MEILISEARCH_KEY=$MEILISEARCH_KEY" >> /var/www/newznab/.env
-        echo "APP_KEY=$APP_KEY" >> /var/www/newznab/.env
+    if [ -f "/var/www/newznab/.env" ]; then
+        # Use sed to update or add values
+        sed -i "s|^DB_HOST=.*|DB_HOST=127.0.0.1|" /var/www/newznab/.env
+        sed -i "s|^DB_USERNAME=.*|DB_USERNAME=newznab|" /var/www/newznab/.env
+        sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" /var/www/newznab/.env
+        sed -i "s|^MEILISEARCH_KEY=.*|MEILISEARCH_KEY=$MEILISEARCH_KEY|" /var/www/newznab/.env
+        sed -i "s|^APP_KEY=\(.*\)|APP_KEY=$APP_KEY|" /var/www/newznab/.env
+
+        # Ensure values exist if they don't
+        grep -q "^DB_HOST=" /var/www/newznab/.env || echo "DB_HOST=127.0.0.1" >> /var/www/newznab/.env
+        grep -q "^DB_USERNAME=" /var/www/newznab/.env || echo "DB_USERNAME=newznab" >> /var/www/newznab/.env
+        grep -q "^DB_PASSWORD=" /var/www/newznab/.env || echo "DB_PASSWORD=$DB_PASSWORD" >> /var/www/newznab/.env
+        grep -q "^MEILISEARCH_KEY=" /var/www/newznab/.env || echo "MEILISEARCH_KEY=$MEILISEARCH_KEY" >> /var/www/newznab/.env
+        grep -q "^APP_KEY=" /var/www/newznab/.env || echo "APP_KEY=$APP_KEY" >> /var/www/newznab/.env
     fi
 
     # Mark credentials as generated
