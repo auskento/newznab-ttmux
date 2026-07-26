@@ -24,7 +24,7 @@ fi
 # ============================================================================
 # Generate credentials and configuration on first run
 # ============================================================================
-CREDENTIALS_FILE="/var/www/newznab/.env.generated"
+CREDENTIALS_FILE="/config/.env.generated"
 
 if [ ! -f "$CREDENTIALS_FILE" ]; then
     echo "🔐 First run detected - generating credentials..."
@@ -37,24 +37,25 @@ if [ ! -f "$CREDENTIALS_FILE" ]; then
     APP_KEY=$(openssl rand -base64 32 | tr -d '\n=')
 
     # Update .env file with generated credentials
-    if [ ! -f "/var/www/newznab/.env" ] && [ -f "/var/www/newznab/.env.example" ]; then
-        cp /var/www/newznab/.env.example /var/www/newznab/.env
+    # Create /config/.env from .env.example if it doesn't exist
+    if [ ! -f "/config/.env" ] && [ -f "/var/www/newznab/.env.example" ]; then
+        cp /var/www/newznab/.env.example /config/.env
     fi
 
-    if [ -f "/var/www/newznab/.env" ]; then
+    if [ -f "/config/.env" ]; then
         # Use sed to update or add values
-        sed -i "s|^DB_HOST=.*|DB_HOST=127.0.0.1|" /var/www/newznab/.env
-        sed -i "s|^DB_USERNAME=.*|DB_USERNAME=newznab|" /var/www/newznab/.env
-        sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" /var/www/newznab/.env
-        sed -i "s|^MEILISEARCH_KEY=.*|MEILISEARCH_KEY=$MEILISEARCH_KEY|" /var/www/newznab/.env
-        sed -i "s|^APP_KEY=\(.*\)|APP_KEY=$APP_KEY|" /var/www/newznab/.env
+        sed -i "s|^DB_HOST=.*|DB_HOST=127.0.0.1|" /config/.env
+        sed -i "s|^DB_USERNAME=.*|DB_USERNAME=newznab|" /config/.env
+        sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" /config/.env
+        sed -i "s|^MEILISEARCH_KEY=.*|MEILISEARCH_KEY=$MEILISEARCH_KEY|" /config/.env
+        sed -i "s|^APP_KEY=\(.*\)|APP_KEY=$APP_KEY|" /config/.env
 
         # Ensure values exist if they don't
-        grep -q "^DB_HOST=" /var/www/newznab/.env || echo "DB_HOST=127.0.0.1" >> /var/www/newznab/.env
-        grep -q "^DB_USERNAME=" /var/www/newznab/.env || echo "DB_USERNAME=newznab" >> /var/www/newznab/.env
-        grep -q "^DB_PASSWORD=" /var/www/newznab/.env || echo "DB_PASSWORD=$DB_PASSWORD" >> /var/www/newznab/.env
-        grep -q "^MEILISEARCH_KEY=" /var/www/newznab/.env || echo "MEILISEARCH_KEY=$MEILISEARCH_KEY" >> /var/www/newznab/.env
-        grep -q "^APP_KEY=" /var/www/newznab/.env || echo "APP_KEY=$APP_KEY" >> /var/www/newznab/.env
+        grep -q "^DB_HOST=" /config/.env || echo "DB_HOST=127.0.0.1" >> /config/.env
+        grep -q "^DB_USERNAME=" /config/.env || echo "DB_USERNAME=newznab" >> /config/.env
+        grep -q "^DB_PASSWORD=" /config/.env || echo "DB_PASSWORD=$DB_PASSWORD" >> /config/.env
+        grep -q "^MEILISEARCH_KEY=" /config/.env || echo "MEILISEARCH_KEY=$MEILISEARCH_KEY" >> /config/.env
+        grep -q "^APP_KEY=" /config/.env || echo "APP_KEY=$APP_KEY" >> /config/.env
     fi
 
     # Mark credentials as generated
@@ -89,7 +90,7 @@ EOF
     echo "║                                                            ║"
     echo "╠════════════════════════════════════════════════════════════╣"
     echo "║  ⚠️  IMPORTANT: Save these credentials securely!            ║"
-    echo "║  They are stored in: /var/www/newznab/.env.generated       ║"
+    echo "║  They are stored in: /config/.env.generated                ║"
     echo "╚════════════════════════════════════════════════════════════╝"
     echo ""
 else
@@ -102,7 +103,7 @@ fi
 # ============================================================================
 # Database Setup on First Run
 # ============================================================================
-SETUP_FILE="/var/www/newznab/.setup-complete"
+SETUP_FILE="/config/.setup-complete"
 
 if [ ! -f "$SETUP_FILE" ]; then
     echo "⚙️  Setting up database and application (first run only)..."
@@ -133,20 +134,27 @@ if [ ! -f "$SETUP_FILE" ]; then
     chmod 664 /var/log/php-errors.log
     echo ""
 
+    # Ensure all data directories exist with correct permissions
+    mkdir -p /data/redis /data/mysql /data/meilisearch /data/logs
+    chown -R mysql:mysql /data/mysql
+    chown -R redis:redis /data/redis
+    mkdir -p /var/run/php
+    chmod 755 /var/run/php
+
     # Start services temporarily for setup
     /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
     SUPERVISOR_PID=$!
 
     # Wait for MariaDB to be ready (connect as root via socket first)
     echo "  ⏳ Waiting for MariaDB to be ready..."
-    for i in {1..30}; do
+    for i in {1..60}; do
         if mysql -u root -e "SELECT 1" 2>/dev/null; then
             echo "  ✓ MariaDB is ready"
             break
         fi
-        if [ $i -eq 30 ]; then
-            echo "  ✗ MariaDB failed to start"
-            kill $SUPERVISOR_PID
+        if [ $i -eq 60 ]; then
+            echo "  ✗ MariaDB failed to start after 60 seconds"
+            kill $SUPERVISOR_PID 2>/dev/null || true
             exit 1
         fi
         sleep 1

@@ -105,6 +105,8 @@ COPY --from=builder /var/www/newznab /var/www/newznab
 RUN mkdir -p /config /data/mysql /data/redis /data/meilisearch /data/logs && \
     # Symlink config directory to /config for easy access
     ln -sf /config /var/www/newznab/config && \
+    # Symlink .env file to /config for persistence
+    ln -sf /config/.env /var/www/newznab/.env && \
     # Symlink storage directory for Usenet data
     ln -sf /config/storage /var/www/newznab/storage || true && \
     # Symlink bootstrap cache
