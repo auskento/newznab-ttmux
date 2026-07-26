@@ -12,12 +12,10 @@ services:
     volumes:
       # Application configuration (Laravel .env, app config)
       - ${CONFIG_PATH:-./config}:/config
-      # Application storage (Usenet headers, metadata, generated files)
+      # Application storage (Usenet headers, metadata, NZBs, bootstrap cache)
       - ${STORAGE_PATH:-./storage}:/var/www/newznab/storage
-      # Bootstrap cache
+      # Bootstrap cache directory
       - ${STORAGE_PATH:-./storage}/bootstrap-cache:/var/www/newznab/bootstrap/cache
-      # Downloaded NZB files
-      - ${STORAGE_PATH:-./storage}/nzbs:/var/www/newznab/storage/nzbs
       # Database storage
       - ${DATA_PATH:-./data}/mysql:/data/mysql
       # Redis cache storage

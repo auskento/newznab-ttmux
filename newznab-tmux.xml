@@ -65,16 +65,40 @@ Recommended Requirements:
       <ContainerDir>/config</ContainerDir>
       <Mode>rw</Mode>
     </Volume>
-    <!-- Usenet Storage (headers, metadata, NZB files) -->
+    <!-- Usenet Storage (headers, metadata, NZB files, bootstrap cache) -->
     <Volume>
       <HostDir>/mnt/user/appdata/newznab/storage/</HostDir>
       <ContainerDir>/var/www/newznab/storage</ContainerDir>
       <Mode>rw</Mode>
     </Volume>
-    <!-- Service Data (database, cache, search index, logs) -->
+    <!-- Bootstrap Cache (Laravel cache files) -->
     <Volume>
-      <HostDir>/mnt/user/appdata/newznab/data/</HostDir>
-      <ContainerDir>/data</ContainerDir>
+      <HostDir>/mnt/user/appdata/newznab/storage/bootstrap-cache/</HostDir>
+      <ContainerDir>/var/www/newznab/bootstrap/cache</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <!-- Database Storage (MariaDB data) -->
+    <Volume>
+      <HostDir>/mnt/user/appdata/newznab/data/mysql/</HostDir>
+      <ContainerDir>/data/mysql</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <!-- Redis Cache Storage -->
+    <Volume>
+      <HostDir>/mnt/user/appdata/newznab/data/redis/</HostDir>
+      <ContainerDir>/data/redis</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <!-- Meilisearch Index Storage -->
+    <Volume>
+      <HostDir>/mnt/user/appdata/newznab/data/meilisearch/</HostDir>
+      <ContainerDir>/data/meilisearch</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <!-- Supervisor Logs -->
+    <Volume>
+      <HostDir>/mnt/user/appdata/newznab/data/logs/</HostDir>
+      <ContainerDir>/var/log/supervisor</ContainerDir>
       <Mode>rw</Mode>
     </Volume>
   </Data>
