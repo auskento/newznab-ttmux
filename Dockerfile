@@ -102,8 +102,6 @@ WORKDIR /var/www/newznab
 COPY --from=builder /var/www/newznab /var/www/newznab
 
 # Copy configuration files
-COPY php.ini /etc/php/8.4/fpm/php.ini
-COPY php.ini /etc/php/8.4/cli/php.ini
 COPY www.conf /etc/php/8.4/fpm/pool.d/www.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
