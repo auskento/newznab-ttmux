@@ -94,9 +94,14 @@ if [ ! -f "$SETUP_FILE" ]; then
     echo "⚙️  Setting up database and application (first run only)..."
     echo ""
 
-    # Test PHP-FPM first to see actual error
-    echo "  Testing PHP-FPM configuration..."
-    /usr/sbin/php-fpm8.4 -t 2>&1 | head -20
+    # Test PHP configuration
+    echo "  🧪 PHP Configuration Test:"
+    echo "     Version: $(/usr/bin/php -v | head -1)"
+    echo "     FPM Config: $(/usr/sbin/php-fpm8.4 -t 2>&1 | grep -i 'success\|error' || echo 'OK')"
+    echo "     Loaded Extensions: $(/usr/bin/php -m | wc -l) extensions"
+    echo "     Key Settings:"
+    /usr/bin/php -r "echo '       memory_limit: ' . ini_get('memory_limit') . PHP_EOL; echo '       max_execution_time: ' . ini_get('max_execution_time') . PHP_EOL; echo '       upload_max_filesize: ' . ini_get('upload_max_filesize') . PHP_EOL; echo '       post_max_size: ' . ini_get('post_max_size') . PHP_EOL;"
+    echo ""
 
     # Start services temporarily for setup
     /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
