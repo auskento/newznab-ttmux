@@ -123,10 +123,10 @@ if [ ! -f "$SETUP_FILE" ]; then
     /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
     SUPERVISOR_PID=$!
 
-    # Wait for MariaDB to be ready
+    # Wait for MariaDB to be ready (connect as root via socket first)
     echo "  ⏳ Waiting for MariaDB to be ready..."
     for i in {1..30}; do
-        if mysqladmin ping -h127.0.0.1 -uroot 2>/dev/null; then
+        if mysql -u root -e "SELECT 1" 2>/dev/null; then
             echo "  ✓ MariaDB is ready"
             break
         fi
@@ -141,10 +141,12 @@ if [ ! -f "$SETUP_FILE" ]; then
     # Create database and user (only on first run)
     if [ -f "/data/mysql/.fresh-install" ]; then
         echo "  Creating database and user..."
-        mysql -h127.0.0.1 -uroot -e "CREATE DATABASE IF NOT EXISTS nntmux CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-        mysql -h127.0.0.1 -uroot -e "CREATE USER IF NOT EXISTS 'newznab'@'127.0.0.1' IDENTIFIED BY '$DB_PASSWORD';"
-        mysql -h127.0.0.1 -uroot -e "GRANT ALL PRIVILEGES ON nntmux.* TO 'newznab'@'127.0.0.1';"
-        mysql -h127.0.0.1 -uroot -e "FLUSH PRIVILEGES;"
+        mysql -u root -e "CREATE DATABASE IF NOT EXISTS nntmux CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+        mysql -u root -e "CREATE USER IF NOT EXISTS 'newznab'@'localhost' IDENTIFIED BY '$DB_PASSWORD';"
+        mysql -u root -e "GRANT ALL PRIVILEGES ON nntmux.* TO 'newznab'@'localhost';"
+        mysql -u root -e "CREATE USER IF NOT EXISTS 'newznab'@'127.0.0.1' IDENTIFIED BY '$DB_PASSWORD';"
+        mysql -u root -e "GRANT ALL PRIVILEGES ON nntmux.* TO 'newznab'@'127.0.0.1';"
+        mysql -u root -e "FLUSH PRIVILEGES;"
         rm /data/mysql/.fresh-install
     fi
 
