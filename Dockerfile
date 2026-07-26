@@ -111,14 +111,16 @@ COPY docker-entrypoint.sh /docker-entrypoint.sh
 # Prepare directories and set permissions
 RUN mkdir -p /etc/nginx/sites-enabled && \
     ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default && \
-    mkdir -p /var/log/supervisor /run/php /data/mysql /data/redis /data/meilisearch && \
-    chown -R www-data:www-data /var/www/newznab /var/log/supervisor && \
+    mkdir -p /var/log/supervisor /run/php /data/mysql /data/redis /data/meilisearch /config && \
+    chown -R www-data:www-data /var/www/newznab /var/log/supervisor /config && \
     chmod -R 755 /var/www/newznab && \
-    chmod -R 775 /var/www/newznab/storage /var/www/newznab/bootstrap/cache && \
+    chmod -R 775 /var/www/newznab/storage /var/www/newznab/bootstrap/cache /config && \
     chmod +x /docker-entrypoint.sh && \
     chown -R mysql:mysql /data/mysql && \
     chown -R redis:redis /data/redis && \
     chmod 700 /data/mysql && \
+    # Symlink config directory for Laravel to find config files
+    ln -sf /config /var/www/newznab/config && \
     # PHP-FPM pool configuration
     sed -i 's/^listen = .*/listen = 127.0.0.1:9000/' /etc/php/8.4/fpm/pool.d/www.conf && \
     sed -i 's/^;pm.max_children = .*/pm.max_children = 50/' /etc/php/8.4/fpm/pool.d/www.conf && \

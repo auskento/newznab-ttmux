@@ -10,22 +10,22 @@ services:
     ports:
       - "${WEB_PORT:-8080}:80"
     volumes:
+      # Application configuration (Laravel .env, app config)
+      - ${CONFIG_PATH:-./config}:/config
       # Application storage (Usenet headers, metadata, generated files)
-      - ${APPDATA_PATH:-.}/storage:/var/www/newznab/storage
+      - ${STORAGE_PATH:-./storage}:/var/www/newznab/storage
       # Bootstrap cache
-      - ${APPDATA_PATH:-.}/bootstrap-cache:/var/www/newznab/bootstrap/cache
+      - ${STORAGE_PATH:-./storage}/bootstrap-cache:/var/www/newznab/bootstrap/cache
       # Downloaded NZB files
-      - ${APPDATA_PATH:-.}/nzbs:/var/www/newznab/storage/nzbs
-      # Application configuration
-      - ${APPDATA_PATH:-.}/config:/var/www/newznab/config
+      - ${STORAGE_PATH:-./storage}/nzbs:/var/www/newznab/storage/nzbs
       # Database storage
-      - ${APPDATA_PATH:-.}/mysql:/data/mysql
+      - ${DATA_PATH:-./data}/mysql:/data/mysql
       # Redis cache storage
-      - ${APPDATA_PATH:-.}/redis:/data/redis
+      - ${DATA_PATH:-./data}/redis:/data/redis
       # Meilisearch index storage
-      - ${APPDATA_PATH:-.}/meilisearch:/data/meilisearch
+      - ${DATA_PATH:-./data}/meilisearch:/data/meilisearch
       # Supervisor logs
-      - ${APPDATA_PATH:-.}/logs:/var/log/supervisor
+      - ${DATA_PATH:-./data}/logs:/var/log/supervisor
     environment:
       - PHP_MEMORY_LIMIT=${PHP_MEMORY_LIMIT:-2048M}
       - PHP_MAX_EXECUTION_TIME=${PHP_MAX_EXECUTION_TIME:-300}
