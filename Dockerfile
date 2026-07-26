@@ -5,7 +5,7 @@
 # ============================================================================
 # Build Stage: Clone source and build application
 # ============================================================================
-FROM debian:12-slim AS builder
+FROM debian:13-slim AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -50,7 +50,7 @@ RUN npm install && npm run build
 # ============================================================================
 # Runtime Stage: All-in-One Production Container
 # ============================================================================
-FROM debian:12-slim
+FROM debian:13-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PHP_MEMORY_LIMIT=512M \
@@ -81,7 +81,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Cache and job queue
     redis-server \
     # Media processing tools
-    unrar \
+    unar \
     p7zip-full \
     ffmpeg \
     mediainfo \
