@@ -102,6 +102,8 @@ WORKDIR /var/www/newznab
 COPY --from=builder /var/www/newznab /var/www/newznab
 
 # Copy configuration files
+COPY php.ini /etc/php/8.4/fpm/php.ini
+COPY php.ini /etc/php/8.4/cli/php.ini
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker-entrypoint.sh /docker-entrypoint.sh
@@ -117,13 +119,10 @@ RUN mkdir -p /etc/nginx/sites-enabled && \
     chown -R mysql:mysql /data/mysql && \
     chown -R redis:redis /data/redis && \
     chmod 700 /data/mysql && \
-    # PHP-FPM configuration (modify default pool)
+    # PHP-FPM pool configuration
     sed -i 's/^listen = .*/listen = 127.0.0.1:9000/' /etc/php/8.4/fpm/pool.d/www.conf && \
     sed -i 's/^;pm.max_children = .*/pm.max_children = 50/' /etc/php/8.4/fpm/pool.d/www.conf && \
-    sed -i 's/^;pm.start_servers = .*/pm.start_servers = 5/' /etc/php/8.4/fpm/pool.d/www.conf && \
-    sed -i 's/^;pm.min_spare_servers = .*/pm.min_spare_servers = 3/' /etc/php/8.4/fpm/pool.d/www.conf && \
-    sed -i 's/^;pm.max_spare_servers = .*/pm.max_spare_servers = 10/' /etc/php/8.4/fpm/pool.d/www.conf && \
-    sed -i 's/^php_admin_value\[memory_limit\] = .*/php_admin_value[memory_limit] = 512M/' /etc/php/8.4/fpm/pool.d/www.conf
+    sed -i 's/^;pm.start_servers = .*/pm.start_servers = 5/' /etc/php/8.4/fpm/pool.d/www.conf
 
 # Expose web server port
 EXPOSE 80
