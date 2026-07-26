@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     php8.4-mbstring \
     php8.4-xml \
     php8.4-bcmath \
+    php8.4-redis \
     composer \
     # Node.js for frontend build
     nodejs \
@@ -76,6 +77,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     php8.4-mbstring \
     php8.4-xml \
     php8.4-bcmath \
+    php8.4-redis \
     # Database server
     mariadb-server \
     # Cache and job queue
