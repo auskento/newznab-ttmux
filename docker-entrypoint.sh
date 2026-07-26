@@ -177,12 +177,49 @@ if [ ! -f "$SETUP_FILE" ]; then
         rm /data/mysql/.fresh-install
     fi
 
+    # Test database connection as newznab user
+    echo "  Testing database connection..."
+    if ! mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SELECT 1" 2>/dev/null; then
+        echo "  ⚠️  Database connection failed for newznab@127.0.0.1"
+        echo "     Attempting with localhost..."
+        if ! mysql -u newznab -p"$DB_PASSWORD" -h localhost nntmux -e "SELECT 1" 2>/dev/null; then
+            echo "  ✗ Database connection failed - both 127.0.0.1 and localhost"
+            kill $SUPERVISOR_PID
+            exit 1
+        fi
+    else
+        echo "  ✓ Database connection successful"
+    fi
+
+    echo ""
+    echo "  Verifying .env configuration..."
+    if [ -f "/config/.env" ]; then
+        echo "  Database config in .env:"
+        grep "^DB_" /config/.env || echo "    No DB_ variables found"
+    else
+        echo "  ⚠️  .env file not found at /config/.env"
+    fi
+
     echo ""
     echo "  Running database migrations..."
-    cd /var/www/newznab && php artisan migrate --force --quiet
+    cd /var/www/newznab
+
+    # Show PHP output for debugging
+    php artisan migrate --force 2>&1 | tee /tmp/migrate.log
+    MIGRATE_EXIT=${PIPESTATUS[0]}
+
+    if [ $MIGRATE_EXIT -ne 0 ]; then
+        echo "  ⚠️  Migration exit code: $MIGRATE_EXIT"
+    fi
+
+    # Verify tables were created
+    if ! mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES LIKE 'settings'" 2>/dev/null | grep -q settings; then
+        echo "  ⚠️  Settings table not found after migration - retrying..."
+        php artisan migrate:refresh --seed --force 2>&1 | head -20 || true
+    fi
 
     echo "  Seeding initial data..."
-    cd /var/www/newznab && php artisan db:seed --force --quiet
+    cd /var/www/newznab && php artisan db:seed --force 2>&1 | head -20 || true
 
     echo "  Creating admin user..."
     cd /var/www/newznab && php artisan nntmux:create-admin \
@@ -190,7 +227,7 @@ if [ ! -f "$SETUP_FILE" ]; then
         --email="admin@localhost" \
         --username="admin" \
         --password="$ADMIN_PASSWORD" \
-        --quiet 2>/dev/null || true
+        --force 2>&1 | head -10 || true
 
     # Mark setup as complete
     touch "$SETUP_FILE"
