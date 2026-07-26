@@ -30,7 +30,7 @@ This is a complete Docker setup for deploying [Newznab-tmux](https://github.com/
    - In Unraid WebUI, go to **Docker** tab
    - Click **Add Container**
    - Select **Template** (if available) or manually enter settings
-   - Use the `unraid-template.xml` file from this repository
+   - Use the `newznab-tmux.xml` file from this repository
 
 2. **Configure Container:**
    - Set **Repository** to the pre-built image (or build locally)
