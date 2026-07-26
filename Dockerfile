@@ -101,6 +101,9 @@ WORKDIR /var/www/newznab
 # Copy built application from builder stage
 COPY --from=builder /var/www/newznab /var/www/newznab
 
+# Copy .env.example template
+COPY .env.example /var/www/newznab/.env.example
+
 # Prepare persistent storage directories
 RUN mkdir -p /config /data/mysql /data/redis /data/meilisearch /data/logs && \
     # Symlink config directory to /config for easy access
