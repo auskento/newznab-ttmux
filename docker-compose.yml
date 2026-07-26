@@ -10,20 +10,10 @@ services:
     ports:
       - "${WEB_PORT:-8080}:80"
     volumes:
-      # Application configuration (Laravel .env, app config)
-      - ${CONFIG_PATH:-./config}:/config
-      # Application storage (Usenet headers, metadata, NZBs, bootstrap cache)
-      - ${STORAGE_PATH:-./storage}:/var/www/newznab/storage
-      # Bootstrap cache directory
-      - ${STORAGE_PATH:-./storage}/bootstrap-cache:/var/www/newznab/bootstrap/cache
-      # Database storage
-      - ${DATA_PATH:-./data}/mysql:/data/mysql
-      # Redis cache storage
-      - ${DATA_PATH:-./data}/redis:/data/redis
-      # Meilisearch index storage
-      - ${DATA_PATH:-./data}/meilisearch:/data/meilisearch
-      # Supervisor logs
-      - ${DATA_PATH:-./data}/logs:/var/log/supervisor
+      # All configuration and application files
+      - ${APPDATA_PATH:-./appdata}:/config
+      # All persistent data (database, cache, search, logs)
+      - ${DATA_PATH:-./data}:/data
     environment:
       - PHP_MEMORY_LIMIT=${PHP_MEMORY_LIMIT:-2048M}
       - PHP_MAX_EXECUTION_TIME=${PHP_MAX_EXECUTION_TIME:-300}

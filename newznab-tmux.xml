@@ -33,7 +33,7 @@ Recommended Requirements:
   <!-- Branding and Links -->
   <Category>Usenet</Category>
   <WebUI>http://[IP]:[PORT:8080]/</WebUI>
-  <TemplateVersion>5.0</TemplateVersion>
+  <TemplateVersion>6.0</TemplateVersion>
   <Icon>https://raw.githubusercontent.com/NNTmux/newznab-tmux/master/public/images/logo.png</Icon>
   <Support>https://github.com/NNTmux/newznab-tmux/discussions</Support>
   <Project>https://github.com/NNTmux/newznab-tmux</Project>
@@ -59,46 +59,16 @@ Recommended Requirements:
 
   <!-- Storage Volumes -->
   <Data>
-    <!-- Application Configuration (contains .env and app config) -->
+    <!-- Application Data (config, .env, storage, bootstrap cache) -->
     <Volume>
-      <HostDir>/mnt/user/appdata/newznab/config/</HostDir>
+      <HostDir>/mnt/user/appdata/newznab/</HostDir>
       <ContainerDir>/config</ContainerDir>
       <Mode>rw</Mode>
     </Volume>
-    <!-- Usenet Storage (headers, metadata, NZB files, bootstrap cache) -->
+    <!-- Persistent Service Data (database, cache, search index, logs) -->
     <Volume>
-      <HostDir>/mnt/user/appdata/newznab/storage/</HostDir>
-      <ContainerDir>/var/www/newznab/storage</ContainerDir>
-      <Mode>rw</Mode>
-    </Volume>
-    <!-- Bootstrap Cache (Laravel cache files) -->
-    <Volume>
-      <HostDir>/mnt/user/appdata/newznab/storage/bootstrap-cache/</HostDir>
-      <ContainerDir>/var/www/newznab/bootstrap/cache</ContainerDir>
-      <Mode>rw</Mode>
-    </Volume>
-    <!-- Database Storage (MariaDB data) -->
-    <Volume>
-      <HostDir>/mnt/user/appdata/newznab/data/mysql/</HostDir>
-      <ContainerDir>/data/mysql</ContainerDir>
-      <Mode>rw</Mode>
-    </Volume>
-    <!-- Redis Cache Storage -->
-    <Volume>
-      <HostDir>/mnt/user/appdata/newznab/data/redis/</HostDir>
-      <ContainerDir>/data/redis</ContainerDir>
-      <Mode>rw</Mode>
-    </Volume>
-    <!-- Meilisearch Index Storage -->
-    <Volume>
-      <HostDir>/mnt/user/appdata/newznab/data/meilisearch/</HostDir>
-      <ContainerDir>/data/meilisearch</ContainerDir>
-      <Mode>rw</Mode>
-    </Volume>
-    <!-- Supervisor Logs -->
-    <Volume>
-      <HostDir>/mnt/user/appdata/newznab/data/logs/</HostDir>
-      <ContainerDir>/var/log/supervisor</ContainerDir>
+      <HostDir>/mnt/user/appdata/newznab/data/</HostDir>
+      <ContainerDir>/data</ContainerDir>
       <Mode>rw</Mode>
     </Volume>
   </Data>
@@ -141,6 +111,14 @@ Recommended Requirements:
   <Date>2025-01-26</Date>
   <GitHub>https://github.com/NNTmux/newznab-tmux</GitHub>
   <Changes>
+v6.0 - Minimal Volume Mounts (2 volumes only)
+- Consolidated all volumes to just 2 mounts for maximum simplicity
+- /config → All application files (config, .env, storage, cache)
+- /data → All service data (mysql, redis, meilisearch, logs)
+- Clean directory structure with subdirectories
+- Symlinks handle all internal path mappings
+- Easiest to manage, backups, and troubleshoot
+
 v5.0 - Simplified Volume Structure
 - Consolidated 6 volumes to 3 clean directories
 - /config → Application configuration (.env, app config)

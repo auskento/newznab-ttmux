@@ -101,6 +101,17 @@ WORKDIR /var/www/newznab
 # Copy built application from builder stage
 COPY --from=builder /var/www/newznab /var/www/newznab
 
+# Prepare persistent storage directories
+RUN mkdir -p /config /data/mysql /data/redis /data/meilisearch /data/logs && \
+    # Symlink config directory to /config for easy access
+    ln -sf /config /var/www/newznab/config && \
+    # Symlink storage directory for Usenet data
+    ln -sf /config/storage /var/www/newznab/storage || true && \
+    # Symlink bootstrap cache
+    ln -sf /config/bootstrap-cache /var/www/newznab/bootstrap/cache || true && \
+    # Symlink supervisor logs to /data
+    ln -sf /data/logs /var/log/supervisor
+
 # Copy configuration files
 COPY php.ini /etc/php/8.4/fpm/php.ini
 COPY php.ini /etc/php/8.4/cli/php.ini
@@ -111,16 +122,14 @@ COPY docker-entrypoint.sh /docker-entrypoint.sh
 # Prepare directories and set permissions
 RUN mkdir -p /etc/nginx/sites-enabled && \
     ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default && \
-    mkdir -p /var/log/supervisor /run/php /data/mysql /data/redis /data/meilisearch /config && \
-    chown -R www-data:www-data /var/www/newznab /var/log/supervisor /config && \
+    mkdir -p /var/log/supervisor /run/php && \
+    chown -R www-data:www-data /var/www/newznab /config && \
     chmod -R 755 /var/www/newznab && \
-    chmod -R 775 /var/www/newznab/storage /var/www/newznab/bootstrap/cache /config && \
+    chmod -R 775 /config && \
     chmod +x /docker-entrypoint.sh && \
     chown -R mysql:mysql /data/mysql && \
     chown -R redis:redis /data/redis && \
     chmod 700 /data/mysql && \
-    # Symlink config directory for Laravel to find config files
-    ln -sf /config /var/www/newznab/config && \
     # PHP-FPM pool configuration
     sed -i 's/^listen = .*/listen = 127.0.0.1:9000/' /etc/php/8.4/fpm/pool.d/www.conf && \
     sed -i 's/^;pm.max_children = .*/pm.max_children = 50/' /etc/php/8.4/fpm/pool.d/www.conf && \
