@@ -4,7 +4,7 @@
   <Name>newznab-tmux</Name>
   <Repository>nntmux/newznab-tmux:latest</Repository>
   <Registry>https://hub.docker.com/r/nntmux/newznab-tmux</Registry>
-  <TemplateURL>https://raw.githubusercontent.com/NNTmux/newznab-tmux-docker/master/newznab-tmux.xml</TemplateURL>
+  <TemplateURL>https://raw.githubusercontent.com/auskento/newznab-ttmux/main/newznab-tmux.xml</TemplateURL>
 
   <!-- Description -->
   <Overview>All-in-one Usenet indexer with automatic scanning, full-text search, and API access - all services included in one container.</Overview>
@@ -105,7 +105,7 @@ Recommended Requirements:
   <!-- Metadata -->
   <Version>2.0</Version>
   <Date>2025-01-26</Date>
-  <GitHub>https://github.com/NNTmux/newznab-tmux</GitHub>
+  <GitHub>https://github.com/auskento/newznab-ttmux</GitHub>
   <Changes>
 v6.0 - Minimal Volume Mounts (2 volumes only)
 - Consolidated all volumes to just 2 mounts for maximum simplicity
