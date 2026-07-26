@@ -42,7 +42,7 @@ RUN git clone --depth 1 https://github.com/NNTmux/newznab-tmux.git . && \
     rm -rf .git .github
 
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 # Install frontend dependencies and build assets
 RUN npm install && npm run build
