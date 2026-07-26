@@ -34,6 +34,7 @@ if [ ! -f "$CREDENTIALS_FILE" ]; then
     DB_PASSWORD=$(openssl rand -base64 16 | tr -d '\n=')
     ADMIN_PASSWORD=$(openssl rand -base64 12 | tr -d '\n=')
     MEILISEARCH_KEY=$(openssl rand -base64 32 | tr -d '\n=')
+    MEILISEARCH_MASTER_KEY=$(openssl rand -base64 32 | tr -d '\n=')
     APP_KEY=$(openssl rand -base64 32 | tr -d '\n=')
 
     # Update .env file with generated credentials
@@ -63,6 +64,7 @@ if [ ! -f "$CREDENTIALS_FILE" ]; then
 DB_PASSWORD=$DB_PASSWORD
 ADMIN_PASSWORD=$ADMIN_PASSWORD
 MEILISEARCH_KEY=$MEILISEARCH_KEY
+MEILISEARCH_MASTER_KEY=$MEILISEARCH_MASTER_KEY
 APP_KEY=$APP_KEY
 GENERATED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 EOF
@@ -85,6 +87,9 @@ EOF
     echo "║  🔍 Meilisearch API Key:                                   ║"
     echo "║     $MEILISEARCH_KEY ║"
     echo "║                                                            ║"
+    echo "║  🗝️  Meilisearch Master Key:                               ║"
+    echo "║     $MEILISEARCH_MASTER_KEY ║"
+    echo "║                                                            ║"
     echo "║  🔑 Laravel APP_KEY:                                       ║"
     echo "║     $APP_KEY ║"
     echo "║                                                            ║"
@@ -98,7 +103,14 @@ else
     source "$CREDENTIALS_FILE"
     echo "  Credentials generated at: $GENERATED_AT"
     echo ""
+    # Ensure MEILISEARCH_MASTER_KEY is set from credentials
+    if [ -z "$MEILISEARCH_MASTER_KEY" ] && grep -q "MEILISEARCH_MASTER_KEY=" "$CREDENTIALS_FILE"; then
+        MEILISEARCH_MASTER_KEY=$(grep "MEILISEARCH_MASTER_KEY=" "$CREDENTIALS_FILE" | cut -d= -f2)
+    fi
 fi
+
+# Export environment variable for supervisord
+export MEILISEARCH_MASTER_KEY
 
 # ============================================================================
 # Database Setup on First Run

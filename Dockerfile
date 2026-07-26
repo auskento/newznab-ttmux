@@ -130,6 +130,9 @@ COPY docker-diagnostic.sh /docker-diagnostic.sh
 RUN mkdir -p /etc/nginx/sites-enabled && \
     ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default && \
     mkdir -p /var/log/supervisor /run/php /var/run/php && \
+    touch /var/log/php8.4-fpm.log && \
+    chown www-data:www-data /var/log/php8.4-fpm.log && \
+    chmod 664 /var/log/php8.4-fpm.log && \
     chown -R www-data:www-data /var/www/newznab /config /run/php /var/run/php && \
     chmod -R 755 /var/www/newznab && \
     chmod -R 775 /config && \
