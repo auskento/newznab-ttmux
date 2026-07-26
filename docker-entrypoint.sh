@@ -128,6 +128,7 @@ export MEILISEARCH_MASTER_KEY
 # Database Setup on First Run
 # ============================================================================
 SETUP_FILE="/config/.setup-complete"
+SEEDING_FILE="/config/.seeding-complete"
 
 # Check if setup is needed
 # Primary check: Do database tables exist?
@@ -310,10 +311,16 @@ EOF
         mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES" 2>/dev/null || echo "    (could not query tables)"
     fi
 
-    # Only run seeding if migrations succeeded
+    # Only run seeding if migrations succeeded AND seeding hasn't been done before
     if [ $TABLES_EXIST -eq 1 ]; then
-        echo "  Seeding initial data..."
-        cd /var/www/newznab && php artisan db:seed --force 2>&1 | head -20 || true
+        if [ ! -f "$SEEDING_FILE" ]; then
+            echo "  Seeding initial data..."
+            cd /var/www/newznab && php artisan db:seed --force 2>&1 | head -20 || true
+            touch "$SEEDING_FILE"
+            echo "  ✓ Seeding complete"
+        else
+            echo "  ✓ Database already seeded - skipping"
+        fi
 
         # Mark setup as complete ONLY if migrations succeeded
         touch "$SETUP_FILE"
