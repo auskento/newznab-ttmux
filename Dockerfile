@@ -89,18 +89,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     gnupg \
     lsb-release \
-    # Build tools for Meilisearch compilation
-    build-essential \
-    rustc \
-    cargo \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Meilisearch from source
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y -q && \
-    . $HOME/.cargo/env && \
-    cargo install meilisearch --locked --quiet && \
-    cp /root/.cargo/bin/meilisearch /usr/local/bin/ && \
-    rm -rf /root/.cargo
+# Install Meilisearch (pre-built binary)
+RUN curl -L https://github.com/meilisearch/meilisearch/releases/download/v1.11.3/meilisearch-linux-amd64 \
+    -o /usr/local/bin/meilisearch && \
+    chmod +x /usr/local/bin/meilisearch
 
 WORKDIR /var/www/newznab
 
