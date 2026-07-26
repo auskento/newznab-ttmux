@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   newznab:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: nntmux/newznab-tmux:latest
     container_name: newznab-tmux
     restart: unless-stopped
     ports:
