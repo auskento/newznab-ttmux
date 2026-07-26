@@ -38,7 +38,9 @@ if [ ! -f "$CREDENTIALS_FILE" ]; then
 
     # Update .env file with generated credentials
     if [ -f "/var/www/newznab/.env" ]; then
+        sed -i "s|DB_USERNAME=.*|DB_USERNAME=newznab|g" /var/www/newznab/.env
         sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|g" /var/www/newznab/.env
+        sed -i "s|DB_HOST=.*|DB_HOST=127.0.0.1|g" /var/www/newznab/.env
         sed -i "s|MEILISEARCH_KEY=.*|MEILISEARCH_KEY=$MEILISEARCH_KEY|g" /var/www/newznab/.env
         sed -i "s|APP_KEY=|APP_KEY=$APP_KEY|g" /var/www/newznab/.env
     fi
@@ -173,7 +175,7 @@ if [ ! -f "$SETUP_FILE" ]; then
 
     # Stop supervisord and let it restart fresh
     kill $SUPERVISOR_PID
-    sleep 2
+    sleep 5
 fi
 
 # ============================================================================
