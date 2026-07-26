@@ -11,6 +11,15 @@ echo ""
 sleep 2
 
 # ============================================================================
+# Ensure all required directories and permissions exist EARLY
+# ============================================================================
+mkdir -p /config /data/mysql /data/redis /data/meilisearch /data/logs
+mkdir -p /config/bootstrap-cache /config/storage/logs /config/storage/app /config/storage/framework/cache /config/storage/framework/sessions /config/storage/framework/views
+chmod 775 /config /config/bootstrap-cache
+chmod -R 775 /config/storage
+chown -R www-data:www-data /config /config/storage /config/bootstrap-cache
+
+# ============================================================================
 # Initialize MariaDB if needed
 # ============================================================================
 echo "📦 Initializing MariaDB..."
@@ -254,11 +263,6 @@ if [ $SETUP_NEEDED -eq 1 ]; then
         echo "  Creating symlink..."
         ln -sf /config/.env /var/www/newznab/.env
     fi
-
-    # Ensure bootstrap cache directory exists and is writable
-    mkdir -p /config/bootstrap-cache
-    chmod 755 /config/bootstrap-cache
-    chown www-data:www-data /config/bootstrap-cache
 
     echo ""
     echo "  Running database migrations..."
