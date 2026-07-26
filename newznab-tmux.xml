@@ -63,6 +63,10 @@ Recommended Requirements:
   <Config Name="Data Path" Target="/data" Default="/mnt/user/appdata/newznab/data/" Mode="rw" Type="Path" Display="always" Required="true" Description="Path for database, cache, search index, and logs">/mnt/user/appdata/newznab/data/</Config>
 
   <!-- Application Settings -->
+  <Config Name="PUID" Target="PUID" Default="99" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="User ID for Unraid volume ownership">99</Config>
+
+  <Config Name="PGID" Target="PGID" Default="100" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="Group ID for Unraid volume ownership">100</Config>
+
   <Config Name="App URL" Target="APP_URL" Default="http://localhost:8080" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="Full URL of your Newznab instance (optional, for notifications)">http://localhost:8080</Config>
 
   <Config Name="PHP Memory Limit" Target="PHP_MEMORY_LIMIT" Default="2048M" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="PHP memory limit (increase for large indexes)">2048M</Config>
@@ -71,14 +75,6 @@ Recommended Requirements:
 
   <!-- Environment Variables -->
   <Environment>
-    <Variable>
-      <Name>PUID</Name>
-      <Value>99</Value>
-    </Variable>
-    <Variable>
-      <Name>PGID</Name>
-      <Value>100</Value>
-    </Variable>
     <Variable>
       <Name>APP_NAME</Name>
       <Value>Newznab-tmux</Value>
