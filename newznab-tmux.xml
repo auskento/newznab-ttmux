@@ -96,12 +96,6 @@ Recommended Requirements:
 
   <Config Name="Appdata Path" Target="/mnt/user/appdata/newznab/" Default="/mnt/user/appdata/newznab/" Mode="rw" Type="Path" Display="always" Required="true" Description="Path for application data, database, cache, and all services">/mnt/user/appdata/newznab/</Config>
 
-  <Config Name="Network Type" Target="NetworkType" Default="bridge" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="Network mode: 'bridge' for port mapping (8080) or 'br0' for static IP on br0 bridge">bridge</Config>
-
-  <Config Name="Container IP Address" Target="IPAddress" Default="" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="(Optional) Static IP for container within your network (e.g., 192.168.9.225). Only use with br0 network mode. Leave empty for automatic assignment."></Config>
-
-  <Config Name="MAC Address" Target="MacAddress" Default="" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="(Optional) MAC address for static IP assignment. Leave empty for automatic."></Config>
-
   <Config Name="App URL" Target="APP_URL" Default="http://localhost:8080" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="Full URL of your Newznab instance (optional)">http://localhost:8080</Config>
 
   <Config Name="PHP Memory Limit" Target="PHP_MEMORY_LIMIT" Default="512M" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="PHP memory limit (increase for large indexes)">512M</Config>
