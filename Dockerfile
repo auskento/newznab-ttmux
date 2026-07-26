@@ -5,7 +5,7 @@
 # ============================================================================
 # Build Stage: Clone source and build application
 # ============================================================================
-FROM ubuntu:22.04 as builder
+FROM ubuntu:22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
