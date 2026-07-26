@@ -4,7 +4,7 @@
   <Name>newznab-tmux</Name>
   <Repository>nntmux/newznab-tmux:latest</Repository>
   <Registry>https://hub.docker.com/r/nntmux/newznab-tmux</Registry>
-  <TemplateURL>https://raw.githubusercontent.com/NNTmux/newznab-tmux-docker/master/unraid-template.xml</TemplateURL>
+  <TemplateURL>https://raw.githubusercontent.com/NNTmux/newznab-tmux-docker/master/newznab-tmux.xml</TemplateURL>
 
   <!-- Description -->
   <Overview>A modern Usenet indexer built on Laravel with automatic Usenet scanning, searchable releases, and API access.</Overview>
