@@ -267,6 +267,18 @@ if [ $SETUP_NEEDED -eq 1 ]; then
     # Clear config cache before migrations to prevent DB access during bootstrap
     rm -f /config/bootstrap-cache/config.php /config/bootstrap-cache/services.php 2>/dev/null || true
 
+    # Create a minimal settings table stub so Laravel bootstrap can load config
+    # This prevents "table doesn't exist" errors during migration bootstrap
+    mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux << 'EOF' 2>/dev/null || true
+CREATE TABLE IF NOT EXISTS settings (
+  id INT NOT NULL AUTO_INCREMENT,
+  name VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  value LONGTEXT COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (id),
+  UNIQUE KEY settings_name_unique (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+EOF
+
     # Run migrations with no-interaction to prevent hangs
     if php artisan migrate --force --no-interaction 2>&1 | tee /tmp/migrate.log; then
         echo "  ✓ Migrations completed successfully"
