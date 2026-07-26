@@ -117,16 +117,20 @@ export MEILISEARCH_MASTER_KEY
 # ============================================================================
 SETUP_FILE="/config/.setup-complete"
 
-# Check if setup is needed (first run OR if tables don't exist)
+# Check if setup is needed
+# Primary check: Do database tables exist?
+# This is checked FIRST because migrations might fail even if setup marker exists
 SETUP_NEEDED=0
-if [ ! -f "$SETUP_FILE" ]; then
-    SETUP_NEEDED=1
+
+# Wait a bit for database to be fully ready
+sleep 5
+
+# Check if settings table exists (indicates successful prior setup)
+if mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SELECT 1 FROM settings LIMIT 1" 2>/dev/null; then
+    echo "✓ Database tables exist - skipping setup"
 else
-    # Verify tables actually exist (migrations might have failed)
-    if ! mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SELECT 1 FROM settings LIMIT 1" 2>/dev/null; then
-        echo "⚠️  Database tables missing - re-running setup..."
-        SETUP_NEEDED=1
-    fi
+    echo "⚙️  Database tables missing - running setup..."
+    SETUP_NEEDED=1
 fi
 
 if [ $SETUP_NEEDED -eq 1 ]; then
@@ -267,29 +271,36 @@ if [ $SETUP_NEEDED -eq 1 ]; then
 
     # Verify tables were created
     echo "  Checking if tables were created..."
+    TABLES_EXIST=0
     if mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES" 2>/dev/null | grep -q settings; then
-        echo "  ✓ Settings table exists"
+        echo "  ✓ Settings table exists - setup successful"
+        TABLES_EXIST=1
     else
-        echo "  ⚠️  Settings table not found - migrations may have failed"
+        echo "  ⚠️  Settings table not found - migrations failed or incomplete"
         echo "  Tables in database:"
         mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES" 2>/dev/null || echo "    (could not query tables)"
     fi
 
-    echo "  Seeding initial data..."
-    cd /var/www/newznab && php artisan db:seed --force 2>&1 | head -20 || true
+    # Only run seeding and admin creation if migrations succeeded
+    if [ $TABLES_EXIST -eq 1 ]; then
+        echo "  Seeding initial data..."
+        cd /var/www/newznab && php artisan db:seed --force 2>&1 | head -20 || true
 
-    echo "  Creating admin user..."
-    cd /var/www/newznab && php artisan nntmux:create-admin \
-        --name="Administrator" \
-        --email="admin@localhost" \
-        --username="admin" \
-        --password="$ADMIN_PASSWORD" \
-        --force 2>&1 | head -10 || true
+        echo "  Creating admin user..."
+        cd /var/www/newznab && php artisan nntmux:create-admin \
+            --name="Administrator" \
+            --email="admin@localhost" \
+            --username="admin" \
+            --password="$ADMIN_PASSWORD" \
+            --force 2>&1 | head -10 || true
 
-    # Mark setup as complete
-    touch "$SETUP_FILE"
-
-    echo "  ✓ Setup complete"
+        # Mark setup as complete ONLY if migrations succeeded
+        touch "$SETUP_FILE"
+        echo "  ✓ Setup complete"
+    else
+        echo "  ✗ Setup incomplete - tables not created"
+        echo "  Will retry on next container start"
+    fi
     echo ""
 
     # Stop supervisord and let it restart fresh
