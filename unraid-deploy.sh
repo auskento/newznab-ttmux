@@ -45,15 +45,16 @@ if [ ! -f "$APPDATA_PATH/config/.env" ]; then
     cp "$SCRIPT_DIR/.env.example" "$APPDATA_PATH/config/.env"
 
     # Generate secure random passwords
-    DB_PASS=$(openssl rand -base64 16)
-    APP_KEY=$(openssl rand -base64 32)
-    MEILI_KEY=$(openssl rand -base64 32)
+    DB_PASS=$(openssl rand -base64 16 | tr -d '\n')
+    DB_ROOT_PASS=$(openssl rand -base64 16 | tr -d '\n')
+    APP_KEY=$(openssl rand -base64 32 | tr -d '\n')
+    MEILI_KEY=$(openssl rand -base64 32 | tr -d '\n')
 
-    # Update .env with generated passwords
-    sed -i "s/DB_PASSWORD=newznabpassword/DB_PASSWORD=$DB_PASS/g" "$APPDATA_PATH/config/.env"
-    sed -i "s/DB_ROOT_PASSWORD=rootpassword/DB_ROOT_PASSWORD=$(openssl rand -base64 16)/g" "$APPDATA_PATH/config/.env"
-    sed -i "s/APP_KEY=/APP_KEY=$APP_KEY/g" "$APPDATA_PATH/config/.env"
-    sed -i "s/MEILISEARCH_KEY=changeme/MEILISEARCH_KEY=$MEILI_KEY/g" "$APPDATA_PATH/config/.env"
+    # Update .env with generated passwords (use | as sed delimiter to avoid issues with / in base64)
+    sed -i "s|DB_PASSWORD=newznabpassword|DB_PASSWORD=$DB_PASS|g" "$APPDATA_PATH/config/.env"
+    sed -i "s|DB_ROOT_PASSWORD=rootpassword|DB_ROOT_PASSWORD=$DB_ROOT_PASS|g" "$APPDATA_PATH/config/.env"
+    sed -i "s|APP_KEY=|APP_KEY=$APP_KEY|g" "$APPDATA_PATH/config/.env"
+    sed -i "s|MEILISEARCH_KEY=changeme|MEILISEARCH_KEY=$MEILI_KEY|g" "$APPDATA_PATH/config/.env"
 
     echo -e "${GREEN}✓ .env file created with secure passwords${NC}"
 else
@@ -84,8 +85,8 @@ echo -e "   ${YELLOW}cd $APPDATA_PATH${NC}"
 echo -e "   ${YELLOW}docker-compose up -d${NC}"
 echo ""
 echo "3. Initialize database:"
-echo -e "   ${YELLOW}docker-compose exec app php artisan migrate --force${NC}"
-echo -e "   ${YELLOW}docker-compose exec app php artisan db:seed${NC}"
+echo -e "   ${YELLOW}docker-compose exec newznab php artisan migrate --force${NC}"
+echo -e "   ${YELLOW}docker-compose exec newznab php artisan db:seed${NC}"
 echo ""
 echo "4. Access web interface:"
 echo -e "   ${YELLOW}http://[unraid-ip]:8080${NC}"
