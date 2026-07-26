@@ -329,19 +329,29 @@ EOF
     fi
     echo ""
 
-    # Stop supervisord and let it restart fresh
-    # Force-kill supervisor and wait for all child processes to terminate
+    # Stop supervisord gracefully
     echo "  Stopping temporary supervisor..."
     kill $SUPERVISOR_PID 2>/dev/null || true
-    sleep 2
-    # Force-kill any remaining supervisord processes
+
+    # Wait for supervisor to gracefully shut down its children
+    # This gives MariaDB, Redis, etc. time to close their files properly
+    sleep 15
+
+    # Only force-kill any remaining processes that didn't stop gracefully
     pkill -9 supervisord 2>/dev/null || true
     pkill -9 mariadb 2>/dev/null || true
     pkill -9 redis-server 2>/dev/null || true
     pkill -9 meilisearch 2>/dev/null || true
     pkill -9 php-fpm 2>/dev/null || true
     pkill -9 nginx 2>/dev/null || true
-    # Wait for ports to fully release
+
+    # Clean up stale MariaDB lock files that might prevent restart
+    rm -f /data/mysql/ibdata1.lock 2>/dev/null || true
+    rm -f /data/mysql/aria_log_control.lock 2>/dev/null || true
+    rm -f /run/mysqld/mysqld.pid 2>/dev/null || true
+    rm -f /run/mysqld/mysqld.sock.lock 2>/dev/null || true
+
+    # Wait for all sockets and ports to fully release
     sleep 5
 fi
 
