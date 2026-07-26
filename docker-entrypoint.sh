@@ -40,11 +40,11 @@ if [ ! -f "$CREDENTIALS_FILE" ]; then
     echo ""
 
     # Generate secure random passwords
-    DB_PASSWORD=$(openssl rand -base64 16 | tr -d '\n=')
-    ADMIN_PASSWORD=$(openssl rand -base64 12 | tr -d '\n=')
-    MEILISEARCH_KEY=$(openssl rand -base64 32 | tr -d '\n=')
-    MEILISEARCH_MASTER_KEY=$(openssl rand -base64 32 | tr -d '\n=')
-    APP_KEY=$(openssl rand -base64 32 | tr -d '\n=')
+    DB_PASSWORD=$(openssl rand -base64 16 | tr -d '\n')
+    ADMIN_PASSWORD=$(openssl rand -base64 12 | tr -d '\n')
+    MEILISEARCH_KEY=$(openssl rand -base64 32 | tr -d '\n')
+    MEILISEARCH_MASTER_KEY=$(openssl rand -base64 32 | tr -d '\n')
+    APP_KEY="base64:$(openssl rand -base64 32 | tr -d '\n')"
 
     # Update .env file with generated credentials
     # Create /config/.env from .env.example if it doesn't exist
