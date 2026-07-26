@@ -117,6 +117,7 @@ RUN mkdir -p /config /data/mysql /data/redis /data/meilisearch /data/logs && \
 # Copy configuration files
 COPY php.ini /etc/php/8.4/fpm/php.ini
 COPY php.ini /etc/php/8.4/cli/php.ini
+COPY www.conf /etc/php/8.4/fpm/pool.d/www.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker-entrypoint.sh /docker-entrypoint.sh
@@ -124,18 +125,15 @@ COPY docker-entrypoint.sh /docker-entrypoint.sh
 # Prepare directories and set permissions
 RUN mkdir -p /etc/nginx/sites-enabled && \
     ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default && \
-    mkdir -p /var/log/supervisor /run/php && \
-    chown -R www-data:www-data /var/www/newznab /config && \
+    mkdir -p /var/log/supervisor /run/php /var/run/php && \
+    chown -R www-data:www-data /var/www/newznab /config /run/php /var/run/php && \
     chmod -R 755 /var/www/newznab && \
     chmod -R 775 /config && \
+    chmod 755 /run/php /var/run/php && \
     chmod +x /docker-entrypoint.sh && \
     chown -R mysql:mysql /data/mysql && \
     chown -R redis:redis /data/redis && \
-    chmod 700 /data/mysql && \
-    # PHP-FPM pool configuration
-    sed -i 's/^listen = .*/listen = 127.0.0.1:9000/' /etc/php/8.4/fpm/pool.d/www.conf && \
-    sed -i 's/^;pm.max_children = .*/pm.max_children = 50/' /etc/php/8.4/fpm/pool.d/www.conf && \
-    sed -i 's/^;pm.start_servers = .*/pm.start_servers = 5/' /etc/php/8.4/fpm/pool.d/www.conf
+    chmod 700 /data/mysql
 
 # Expose web server port
 EXPOSE 80
