@@ -330,9 +330,19 @@ EOF
     echo ""
 
     # Stop supervisord and let it restart fresh
-    # Allow sufficient time for sockets and ports to fully release
-    kill $SUPERVISOR_PID
-    sleep 10
+    # Force-kill supervisor and wait for all child processes to terminate
+    echo "  Stopping temporary supervisor..."
+    kill $SUPERVISOR_PID 2>/dev/null || true
+    sleep 2
+    # Force-kill any remaining supervisord processes
+    pkill -9 supervisord 2>/dev/null || true
+    pkill -9 mariadb 2>/dev/null || true
+    pkill -9 redis-server 2>/dev/null || true
+    pkill -9 meilisearch 2>/dev/null || true
+    pkill -9 php-fpm 2>/dev/null || true
+    pkill -9 nginx 2>/dev/null || true
+    # Wait for ports to fully release
+    sleep 5
 fi
 
 # ============================================================================
