@@ -38,11 +38,21 @@ if [ ! -f "$CREDENTIALS_FILE" ]; then
 
     # Update .env file with generated credentials
     if [ -f "/var/www/newznab/.env" ]; then
-        sed -i "s|DB_USERNAME=.*|DB_USERNAME=newznab|g" /var/www/newznab/.env
-        sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|g" /var/www/newznab/.env
-        sed -i "s|DB_HOST=.*|DB_HOST=127.0.0.1|g" /var/www/newznab/.env
-        sed -i "s|MEILISEARCH_KEY=.*|MEILISEARCH_KEY=$MEILISEARCH_KEY|g" /var/www/newznab/.env
-        sed -i "s|APP_KEY=|APP_KEY=$APP_KEY|g" /var/www/newznab/.env
+        # Use grep -v to remove old values, then append new ones
+        grep -v "^DB_HOST=" /var/www/newznab/.env > /tmp/.env.tmp
+        grep -v "^DB_USERNAME=" /tmp/.env.tmp > /var/www/newznab/.env
+        grep -v "^DB_PASSWORD=" /var/www/newznab/.env > /tmp/.env.tmp
+        grep -v "^MEILISEARCH_KEY=" /tmp/.env.tmp > /var/www/newznab/.env
+        grep -v "^APP_KEY=" /var/www/newznab/.env > /tmp/.env.tmp
+        mv /tmp/.env.tmp /var/www/newznab/.env
+
+        # Append new values
+        echo "" >> /var/www/newznab/.env
+        echo "DB_HOST=127.0.0.1" >> /var/www/newznab/.env
+        echo "DB_USERNAME=newznab" >> /var/www/newznab/.env
+        echo "DB_PASSWORD=$DB_PASSWORD" >> /var/www/newznab/.env
+        echo "MEILISEARCH_KEY=$MEILISEARCH_KEY" >> /var/www/newznab/.env
+        echo "APP_KEY=$APP_KEY" >> /var/www/newznab/.env
     fi
 
     # Mark credentials as generated
