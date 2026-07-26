@@ -41,13 +41,13 @@ Recommended Requirements:
   <Donate>https://github.com/sponsors/NNTmux</Donate>
 
   <!-- Container Configuration -->
-  <Network>custom</Network>
+  <Network>bridge</Network>
   <Privileged>false</Privileged>
   <Shell>bash</Shell>
 
   <!-- Networking -->
   <Networking>
-    <Mode>custom</Mode>
+    <Mode>bridge</Mode>
     <Publish>
       <Port>
         <HostPort>8080</HostPort>
