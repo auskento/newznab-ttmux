@@ -1,7 +1,9 @@
-# Multi-stage build for newznab-tmux
-FROM php:8.4-fpm-alpine as php-base
+# All-in-One Newznab-tmux Container
+# Includes: PHP-FPM, Nginx, MariaDB, Redis, Meilisearch, and Supervisor
 
-# Install PHP extensions and dependencies
+FROM php:8.4-fpm-alpine as builder
+
+# Build dependencies
 RUN apk add --no-cache \
     alpine-sdk \
     curl-dev \
@@ -11,17 +13,14 @@ RUN apk add --no-cache \
     freetype-dev \
     icu-dev \
     oniguruma-dev \
-    gnu-libiconv-dev \
-    unrar \
-    p7zip \
-    ffmpeg \
-    mediainfo \
     git \
     nodejs \
     npm \
-    composer \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) \
+    composer
+
+# Install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install -j$(nproc) \
     pdo_mysql \
     curl \
     json \
@@ -30,64 +29,112 @@ RUN apk add --no-cache \
     intl \
     mbstring \
     xml \
-    pcntl \
-    && apk del alpine-sdk
+    pcntl
 
-# Install GNU libiconv to work around musl libc issues
-ENV LD_PRELOAD=/usr/lib/preloadable_libc.so GNU_LIBICONV=all
-
-# Set working directory
 WORKDIR /var/www/newznab
 
 # Copy application files
 COPY app/ .
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader && \
+    npm install && npm run build
 
-# Install frontend dependencies
-RUN npm install && npm run build
+# Production stage - All in one
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PHP_MEMORY_LIMIT=512M \
+    PHP_MAX_EXECUTION_TIME=300 \
+    MEILISEARCH_ENV=production
+
+# Install all required services and dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Web server
+    nginx \
+    # PHP
+    php8.3-fpm \
+    php8.3-cli \
+    php8.3-pdo-mysql \
+    php8.3-curl \
+    php8.3-gd \
+    php8.3-zip \
+    php8.3-intl \
+    php8.3-mbstring \
+    php8.3-xml \
+    php8.3-bcmath \
+    # Database
+    mariadb-server \
+    # Cache and Queue
+    redis-server \
+    # Media tools
+    unrar \
+    p7zip-full \
+    ffmpeg \
+    mediainfo \
+    # Process management
+    supervisor \
+    # Utilities
+    curl \
+    wget \
+    git \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    # Build tools for Meilisearch
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Rust for Meilisearch
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
+    . $HOME/.cargo/env && \
+    cargo install meilisearch --locked
+
+# Copy Meilisearch binary to PATH
+RUN cp /root/.cargo/bin/meilisearch /usr/local/bin/
+
+# Create application directory
+WORKDIR /var/www/newznab
+
+# Copy application from builder
+COPY --from=builder /var/www/newznab /var/www/newznab
+
+# Copy configuration files
+COPY php.ini /etc/php/8.3/fpm/php.ini
+COPY php.ini /etc/php/8.3/cli/php.ini
+COPY www.conf /etc/php/8.3/fpm/pool.d/www.conf
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Create nginx configuration for local reverse proxy
+RUN mkdir -p /etc/nginx/sites-enabled && \
+    ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+
+# Create application initialization script
+RUN mkdir -p /docker-entrypoint.d
+COPY docker-entrypoint.sh /docker-entrypoint.sh
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/newznab && \
     chmod -R 755 /var/www/newznab && \
-    chmod -R 775 /var/www/newznab/storage /var/www/newznab/bootstrap/cache
+    chmod -R 775 /var/www/newznab/storage /var/www/newznab/bootstrap/cache && \
+    chmod +x /docker-entrypoint.sh && \
+    mkdir -p /var/log/supervisor && \
+    mkdir -p /run/php && \
+    chown -R www-data:www-data /var/log/supervisor /run/php
 
-# Production stage
-FROM php:8.4-fpm-alpine
+# Create data directories
+RUN mkdir -p /data/mysql /data/redis /data/meilisearch && \
+    chown -R mysql:mysql /data/mysql && \
+    chown -R redis:redis /data/redis && \
+    chmod 700 /data/mysql
 
-# Install runtime dependencies only
-RUN apk add --no-cache \
-    curl \
-    libzip \
-    libpng \
-    libjpeg-turbo \
-    freetype \
-    icu-libs \
-    unrar \
-    p7zip \
-    ffmpeg \
-    mediainfo \
-    git
+# Expose main web port
+EXPOSE 80
 
-WORKDIR /var/www/newznab
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:80/health || exit 1
 
-# Copy from builder
-COPY --from=php-base /var/www/newznab /var/www/newznab
-COPY --from=php-base /usr/local/lib/php/extensions /usr/local/lib/php/extensions
-COPY --from=php-base /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
-
-# Copy PHP configuration
-COPY php.ini /usr/local/etc/php/
-COPY www.conf /usr/local/etc/php-fpm.d/
-
-# Create non-root user
-RUN addgroup -g 1000 laravel && \
-    adduser -D -u 1000 -G laravel laravel && \
-    chown -R laravel:laravel /var/www/newznab
-
-USER laravel
-
-EXPOSE 9000
-
-CMD ["php-fpm"]
+# Start all services
+CMD ["/docker-entrypoint.sh"]

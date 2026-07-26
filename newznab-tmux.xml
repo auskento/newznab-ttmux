@@ -7,18 +7,21 @@
   <TemplateURL>https://raw.githubusercontent.com/NNTmux/newznab-tmux-docker/master/newznab-tmux.xml</TemplateURL>
 
   <!-- Description -->
-  <Overview>A modern Usenet indexer built on Laravel with automatic Usenet scanning, searchable releases, and API access.</Overview>
+  <Overview>All-in-one Usenet indexer with automatic scanning, full-text search, and API access - all services included in one container.</Overview>
   <Description>
-Newznab-tmux is a high-performance Usenet indexer built on the Laravel framework. It automatically scans Usenet, organizes headers into searchable releases, and provides both API access and web-based interface for managing your Usenet content library.
+Newznab-tmux is a high-performance, self-contained Usenet indexer built on the Laravel framework. This all-in-one container includes everything needed: PHP application, Nginx web server, MariaDB database, Redis cache, Meilisearch indexing, and Supervisor job management.
+
+All services run inside a single container with persistent storage, making deployment simple and efficient.
 
 Key Features:
-- Automatic Usenet header scanning
+- Complete Usenet header scanning
 - Full-text search via Meilisearch
 - RESTful API for external integrations
 - Redis-backed caching and job queuing
 - Background job processing with Supervisor
 - MariaDB database backend
 - Multi-protocol media detection
+- Self-contained - no external dependencies
 
 Recommended Requirements:
 - 16GB+ RAM
@@ -30,7 +33,7 @@ Recommended Requirements:
   <!-- Branding and Links -->
   <Category>Usenet</Category>
   <WebUI>http://[IP]:[PORT:8080]/</WebUI>
-  <TemplateVersion>1.0</TemplateVersion>
+  <TemplateVersion>2.0</TemplateVersion>
   <Icon>https://raw.githubusercontent.com/NNTmux/newznab-tmux/master/public/images/logo.png</Icon>
   <Support>https://github.com/NNTmux/newznab-tmux/discussions</Support>
   <Project>https://github.com/NNTmux/newznab-tmux</Project>
@@ -54,7 +57,7 @@ Recommended Requirements:
     </Publish>
   </Networking>
 
-  <!-- Storage Volumes -->
+  <!-- Storage Volumes - All services store data in separate mounted paths -->
   <Data>
     <Volume>
       <HostDir>/mnt/user/appdata/newznab/</HostDir>
@@ -71,42 +74,35 @@ Recommended Requirements:
       <ContainerDir>/var/www/newznab/storage/nzbs</ContainerDir>
       <Mode>rw</Mode>
     </Volume>
+    <Volume>
+      <HostDir>/mnt/user/appdata/newznab/mysql/</HostDir>
+      <ContainerDir>/data/mysql</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <Volume>
+      <HostDir>/mnt/user/appdata/newznab/redis/</HostDir>
+      <ContainerDir>/data/redis</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <Volume>
+      <HostDir>/mnt/user/appdata/newznab/meilisearch/</HostDir>
+      <ContainerDir>/data/meilisearch</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
   </Data>
 
   <!-- User Configuration -->
   <Config Name="Web Port" Target="8080" Default="8080" Mode="rw" Type="Port" Display="always" Required="true" Description="Port for web interface">8080</Config>
 
-  <Config Name="Appdata Path" Target="/mnt/user/appdata/newznab/" Default="/mnt/user/appdata/newznab/" Mode="rw" Type="Path" Display="always" Required="true" Description="Path for application data and storage">/mnt/user/appdata/newznab/</Config>
+  <Config Name="Appdata Path" Target="/mnt/user/appdata/newznab/" Default="/mnt/user/appdata/newznab/" Mode="rw" Type="Path" Display="always" Required="true" Description="Path for application data, database, cache, and all services">/mnt/user/appdata/newznab/</Config>
 
-  <Config Name="NZB Storage" Target="/mnt/user/appdata/newznab/nzbs/" Default="/mnt/user/appdata/newznab/nzbs/" Mode="rw" Type="Path" Display="always" Required="false" Description="Path for NZB files storage">/mnt/user/appdata/newznab/nzbs/</Config>
-
-  <Config Name="App URL" Target="APP_URL" Default="http://localhost:8080" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="Full URL of your Newznab instance">http://localhost:8080</Config>
-
-  <Config Name="Database Host" Target="DB_HOST" Default="newznab-db" Mode="rw" Type="Variable" Display="advanced" Required="true" Description="Database container hostname">newznab-db</Config>
-
-  <Config Name="Database Port" Target="DB_PORT" Default="3306" Mode="rw" Type="Variable" Display="advanced" Required="true" Description="Database port">3306</Config>
-
-  <Config Name="Database Name" Target="DB_DATABASE" Default="newznab" Mode="rw" Type="Variable" Display="advanced" Required="true" Description="Database name">newznab</Config>
-
-  <Config Name="Database User" Target="DB_USERNAME" Default="newznab" Mode="rw" Type="Variable" Display="advanced" Required="true" Description="Database username">newznab</Config>
-
-  <Config Name="Database Password" Target="DB_PASSWORD" Default="changeme" Mode="rw" Type="Variable" Display="advanced" Required="true" Mask="true" Description="Database password - CHANGE THIS">changeme</Config>
-
-  <Config Name="Redis Host" Target="REDIS_HOST" Default="newznab-redis" Mode="rw" Type="Variable" Display="advanced" Required="true" Description="Redis container hostname">newznab-redis</Config>
-
-  <Config Name="Redis Port" Target="REDIS_PORT" Default="6379" Mode="rw" Type="Variable" Display="advanced" Required="true" Description="Redis port">6379</Config>
-
-  <Config Name="Cache Driver" Target="CACHE_DRIVER" Default="redis" Mode="rw" Type="Variable" Display="advanced" Required="true" Description="Cache driver (redis recommended)">redis</Config>
-
-  <Config Name="Queue Connection" Target="QUEUE_CONNECTION" Default="redis" Mode="rw" Type="Variable" Display="advanced" Required="true" Description="Queue connection type">redis</Config>
-
-  <Config Name="Search Engine Host" Target="MEILISEARCH_HOST" Default="http://newznab-meilisearch:7700" Mode="rw" Type="Variable" Display="advanced" Required="true" Description="Meilisearch server URL">http://newznab-meilisearch:7700</Config>
-
-  <Config Name="Meilisearch API Key" Target="MEILISEARCH_KEY" Default="changeme" Mode="rw" Type="Variable" Display="advanced" Required="true" Mask="true" Description="Meilisearch API key - CHANGE THIS">changeme</Config>
+  <Config Name="App URL" Target="APP_URL" Default="http://localhost:8080" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="Full URL of your Newznab instance (optional)">http://localhost:8080</Config>
 
   <Config Name="PHP Memory Limit" Target="PHP_MEMORY_LIMIT" Default="512M" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="PHP memory limit (increase for large indexes)">512M</Config>
 
   <Config Name="PHP Max Execution Time" Target="PHP_MAX_EXECUTION_TIME" Default="300" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="PHP maximum execution time in seconds">300</Config>
+
+  <Config Name="Meilisearch API Key" Target="MEILISEARCH_KEY" Default="changeme" Mode="rw" Type="Variable" Display="advanced" Required="false" Mask="true" Description="Meilisearch API key (auto-generated on first run if not set)">changeme</Config>
 
   <!-- Environment Variables -->
   <Environment>
@@ -129,15 +125,19 @@ Recommended Requirements:
   </Environment>
 
   <!-- Metadata -->
-  <Version>1.0</Version>
+  <Version>2.0</Version>
   <Date>2025-01-26</Date>
   <GitHub>https://github.com/NNTmux/newznab-tmux</GitHub>
   <Changes>
+v2.0 - All-in-one self-contained container
+- Single container with all services
+- Nginx, PHP-FPM, MariaDB, Redis, Meilisearch
+- Supervisor process management
+- Simplified deployment and configuration
+- Reduced complexity and resource overhead
+
 v1.0 - Initial Unraid template release
-- Newznab-tmux application container
-- MariaDB database integration
-- Redis caching and queueing
-- Meilisearch full-text search
-- Supervisor background jobs
+- Multi-container orchestration
+- Separate services for modularity
   </Changes>
 </Container>
