@@ -5,22 +5,20 @@
 # ============================================================================
 # Build Stage: Clone source and build application
 # ============================================================================
-FROM ubuntu:22.04 AS builder
+FROM debian:12-slim AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Add PHP 8.3 repository and install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    && add-apt-repository ppa:ondrej/php -y \
+    lsb-release ca-certificates curl gnupg \
+    && curl https://packages.sury.org/php/apt.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/sury.gpg \
+    && echo "deb [signed-by=/etc/apt/trusted.gpg.d/sury.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/sury.list \
     && apt-get update && apt-get install -y --no-install-recommends \
     # Version control
     git \
     # Build tools
     build-essential \
-    curl \
-    wget \
-    ca-certificates \
     # PHP 8.3 and build tools
     php8.3-cli \
     php8.3-pdo-mysql \
@@ -52,28 +50,32 @@ RUN npm install && npm run build
 # ============================================================================
 # Runtime Stage: All-in-One Production Container
 # ============================================================================
-FROM ubuntu:22.04
+FROM debian:12-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PHP_MEMORY_LIMIT=512M \
     PHP_MAX_EXECUTION_TIME=300 \
     MEILISEARCH_ENV=production
 
-# Install all OS and runtime dependencies
+# Add PHP 8.3 repository and install all runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    lsb-release ca-certificates curl gnupg \
+    && curl https://packages.sury.org/php/apt.gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/sury.gpg \
+    && echo "deb [signed-by=/etc/apt/trusted.gpg.d/sury.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/sury.list \
+    && apt-get update && apt-get install -y --no-install-recommends \
     # Web server
     nginx \
     # PHP runtime
-    php-fpm \
-    php-cli \
-    php-pdo-mysql \
-    php-curl \
-    php-gd \
-    php-zip \
-    php-intl \
-    php-mbstring \
-    php-xml \
-    php-bcmath \
+    php8.3-fpm \
+    php8.3-cli \
+    php8.3-pdo-mysql \
+    php8.3-curl \
+    php8.3-gd \
+    php8.3-zip \
+    php8.3-intl \
+    php8.3-mbstring \
+    php8.3-xml \
+    php8.3-bcmath \
     # Database server
     mariadb-server \
     # Cache and job queue
@@ -86,12 +88,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Process management
     supervisor \
     # Utilities
-    curl \
-    wget \
     git \
-    ca-certificates \
-    gnupg \
-    lsb-release \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Meilisearch (pre-built binary)
