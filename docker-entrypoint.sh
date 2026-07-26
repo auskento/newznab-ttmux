@@ -7,6 +7,11 @@ echo "║     🚀 Newznab-tmux All-in-One Container Starting...      ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
+# Set PUID/PGID for Unraid compatibility (default to 99:100)
+PUID=${PUID:-99}
+PGID=${PGID:-100}
+echo "Setting permissions: PUID=$PUID, PGID=$PGID"
+
 # Wait for base system to be ready
 sleep 2
 
@@ -17,6 +22,9 @@ mkdir -p /config /data/mysql /data/redis /data/meilisearch /data/logs
 mkdir -p /config/bootstrap-cache /config/storage/logs /config/storage/app /config/storage/framework/cache /config/storage/framework/sessions /config/storage/framework/views
 chmod 775 /config /config/bootstrap-cache
 chmod -R 775 /config/storage
+# Set proper ownership for Unraid volumes (PUID:PGID)
+chown -R ${PUID}:${PGID} /config /data
+# Also ensure www-data can access files
 chown -R www-data:www-data /config /config/storage /config/bootstrap-cache
 
 # ============================================================================
