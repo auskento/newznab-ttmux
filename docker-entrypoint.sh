@@ -94,6 +94,10 @@ if [ ! -f "$SETUP_FILE" ]; then
     echo "⚙️  Setting up database and application (first run only)..."
     echo ""
 
+    # Test PHP-FPM first to see actual error
+    echo "  Testing PHP-FPM configuration..."
+    /usr/sbin/php-fpm8.4 -t 2>&1 | head -20
+
     # Start services temporarily for setup
     /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
     SUPERVISOR_PID=$!
