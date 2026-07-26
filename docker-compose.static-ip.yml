@@ -1,0 +1,67 @@
+version: '3.8'
+
+# This is an OPTIONAL version for users who need a static IP address
+# Use this if: docker-compose up -d fails due to port conflicts
+# Usage: docker-compose -f docker-compose.static-ip.yml up -d
+
+services:
+  newznab:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: newznab-tmux
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    volumes:
+      - ./config/.env:/var/www/newznab/.env:ro
+      - newznab-storage:/var/www/newznab/storage
+      - newznab-cache:/var/www/newznab/bootstrap/cache
+      - newznab-nzbs:/var/www/newznab/storage/nzbs
+      - newznab-mysql:/data/mysql
+      - newznab-redis:/data/redis
+      - newznab-meilisearch:/data/meilisearch
+      - newznab-logs:/var/log/supervisor
+    environment:
+      - PHP_MEMORY_LIMIT=${PHP_MEMORY_LIMIT:-512M}
+      - PHP_MAX_EXECUTION_TIME=${PHP_MAX_EXECUTION_TIME:-300}
+      - MEILISEARCH_KEY=${MEILISEARCH_KEY:-changeme}
+      - DB_HOST=127.0.0.1
+      - DB_PORT=3306
+      - REDIS_HOST=127.0.0.1
+      - REDIS_PORT=6379
+      - MEILISEARCH_HOST=http://127.0.0.1:7700
+    networks:
+      newznab-net:
+        ipv4_address: ${CONTAINER_IP:-172.20.0.10}
+    labels:
+      - "com.example.description=Newznab-tmux All-in-One Usenet Indexer"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  newznab-storage:
+    driver: local
+  newznab-cache:
+    driver: local
+  newznab-nzbs:
+    driver: local
+  newznab-mysql:
+    driver: local
+  newznab-redis:
+    driver: local
+  newznab-meilisearch:
+    driver: local
+  newznab-logs:
+    driver: local
+
+networks:
+  newznab-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${CONTAINER_SUBNET:-172.20.0.0/16}

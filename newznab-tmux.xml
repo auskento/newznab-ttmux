@@ -92,10 +92,13 @@ Recommended Requirements:
   </Data>
 
   <!-- User Configuration -->
-  <Config Name="Web Port" Target="8080" Default="8080" Mode="rw" Type="Port" Display="always" Required="true" Description="Port for web interface (optional, can use static IP instead)">8080</Config>
-
+  <Config Name="Web Port" Target="8080" Default="8080" Mode="rw" Type="Port" Display="always" Required="true" Description="Port for web interface">8080</Config>
 
   <Config Name="Appdata Path" Target="/mnt/user/appdata/newznab/" Default="/mnt/user/appdata/newznab/" Mode="rw" Type="Path" Display="always" Required="true" Description="Path for application data, database, cache, and all services">/mnt/user/appdata/newznab/</Config>
+
+  <Config Name="Container Network Subnet" Target="CONTAINER_SUBNET" Default="172.20.0.0/16" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="(ADVANCED) Docker network subnet for static IP. Use non-overlapping subnet (e.g., 172.20.0.0/16, not your existing network)">172.20.0.0/16</Config>
+
+  <Config Name="Container Static IP" Target="CONTAINER_IP" Default="172.20.0.10" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="(ADVANCED) Static container IP within the subnet. Requires both subnet fields filled. Use docker-compose.static-ip.yml if needed.">172.20.0.10</Config>
 
   <Config Name="App URL" Target="APP_URL" Default="http://localhost:8080" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="Full URL of your Newznab instance (optional)">http://localhost:8080</Config>
 
