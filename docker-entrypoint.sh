@@ -139,6 +139,13 @@ if [ ! -f "$SETUP_FILE" ]; then
     chmod 664 /var/log/php-errors.log
     echo ""
 
+    # Run diagnostics before starting services
+    if [ -f "/docker-diagnostic.sh" ]; then
+        echo "  Running pre-startup diagnostics..."
+        bash /docker-diagnostic.sh 2>&1 | sed 's/^/  /'
+        echo ""
+    fi
+
     # Ensure all data directories exist with correct permissions
     mkdir -p /data/redis /data/mysql /data/meilisearch /data/logs
     chown -R mysql:mysql /data/mysql

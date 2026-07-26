@@ -124,6 +124,7 @@ COPY www.conf /etc/php/8.4/fpm/pool.d/www.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY docker-diagnostic.sh /docker-diagnostic.sh
 
 # Prepare directories and set permissions
 RUN mkdir -p /etc/nginx/sites-enabled && \
@@ -133,7 +134,7 @@ RUN mkdir -p /etc/nginx/sites-enabled && \
     chmod -R 755 /var/www/newznab && \
     chmod -R 775 /config && \
     chmod 755 /run/php /var/run/php && \
-    chmod +x /docker-entrypoint.sh && \
+    chmod +x /docker-entrypoint.sh /docker-diagnostic.sh && \
     chown -R mysql:mysql /data/mysql && \
     chown -R redis:redis /data/redis && \
     chmod 700 /data/mysql
