@@ -1,46 +1,54 @@
-# All-in-One Newznab-tmux Container
-# Includes: PHP-FPM, Nginx, MariaDB, Redis, Meilisearch, and Supervisor
+# All-in-One Newznab-tmux Docker Image
+# Self-contained: Clones source from GitHub, installs all OS/software, configures everything
+# Services: PHP-FPM, Nginx, MariaDB, Redis, Meilisearch, Supervisor
 
-FROM php:8.4-fpm-alpine as builder
+# ============================================================================
+# Build Stage: Clone source and build application
+# ============================================================================
+FROM ubuntu:22.04 as builder
 
-# Build dependencies
-RUN apk add --no-cache \
-    alpine-sdk \
-    curl-dev \
-    libzip-dev \
-    libpng-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
-    icu-dev \
-    oniguruma-dev \
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Version control
     git \
+    # Build tools
+    build-essential \
+    curl \
+    wget \
+    ca-certificates \
+    # PHP and build tools
+    php-cli \
+    php-pdo-mysql \
+    php-curl \
+    php-gd \
+    php-zip \
+    php-intl \
+    php-mbstring \
+    php-xml \
+    php-bcmath \
+    composer \
+    # Node.js for frontend build
     nodejs \
     npm \
-    composer
-
-# Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
-    docker-php-ext-install -j$(nproc) \
-    pdo_mysql \
-    curl \
-    json \
-    gd \
-    zip \
-    intl \
-    mbstring \
-    xml \
-    pcntl
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/newznab
 
-# Copy application files
-COPY app/ .
+# Clone newznab-tmux from GitHub
+RUN git clone --depth 1 https://github.com/NNTmux/newznab-tmux.git . && \
+    rm -rf .git .github
 
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader && \
-    npm install && npm run build
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader
 
-# Production stage - All in one
+# Install frontend dependencies and build assets
+RUN npm install && npm run build
+
+# ============================================================================
+# Runtime Stage: All-in-One Production Container
+# ============================================================================
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -48,26 +56,26 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PHP_MAX_EXECUTION_TIME=300 \
     MEILISEARCH_ENV=production
 
-# Install all required services and dependencies
+# Install all OS and runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # Web server
     nginx \
-    # PHP
-    php8.3-fpm \
-    php8.3-cli \
-    php8.3-pdo-mysql \
-    php8.3-curl \
-    php8.3-gd \
-    php8.3-zip \
-    php8.3-intl \
-    php8.3-mbstring \
-    php8.3-xml \
-    php8.3-bcmath \
-    # Database
+    # PHP runtime
+    php-fpm \
+    php-cli \
+    php-pdo-mysql \
+    php-curl \
+    php-gd \
+    php-zip \
+    php-intl \
+    php-mbstring \
+    php-xml \
+    php-bcmath \
+    # Database server
     mariadb-server \
-    # Cache and Queue
+    # Cache and job queue
     redis-server \
-    # Media tools
+    # Media processing tools
     unrar \
     p7zip-full \
     ffmpeg \
@@ -81,22 +89,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     gnupg \
     lsb-release \
-    # Build tools for Meilisearch
+    # Build tools for Meilisearch compilation
     build-essential \
+    rustc \
+    cargo \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Rust for Meilisearch
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
+# Install Meilisearch from source
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y -q && \
     . $HOME/.cargo/env && \
-    cargo install meilisearch --locked
+    cargo install meilisearch --locked --quiet && \
+    cp /root/.cargo/bin/meilisearch /usr/local/bin/ && \
+    rm -rf /root/.cargo
 
-# Copy Meilisearch binary to PATH
-RUN cp /root/.cargo/bin/meilisearch /usr/local/bin/
-
-# Create application directory
 WORKDIR /var/www/newznab
 
-# Copy application from builder
+# Copy built application from builder stage
 COPY --from=builder /var/www/newznab /var/www/newznab
 
 # Copy configuration files
@@ -105,36 +113,26 @@ COPY php.ini /etc/php/8.3/cli/php.ini
 COPY www.conf /etc/php/8.3/fpm/pool.d/www.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# Create nginx configuration for local reverse proxy
-RUN mkdir -p /etc/nginx/sites-enabled && \
-    ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
-
-# Create application initialization script
-RUN mkdir -p /docker-entrypoint.d
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/newznab && \
+# Prepare directories and set permissions
+RUN mkdir -p /etc/nginx/sites-enabled && \
+    ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default && \
+    mkdir -p /var/log/supervisor /run/php /data/mysql /data/redis /data/meilisearch && \
+    chown -R www-data:www-data /var/www/newznab /var/log/supervisor /run/php && \
     chmod -R 755 /var/www/newznab && \
     chmod -R 775 /var/www/newznab/storage /var/www/newznab/bootstrap/cache && \
     chmod +x /docker-entrypoint.sh && \
-    mkdir -p /var/log/supervisor && \
-    mkdir -p /run/php && \
-    chown -R www-data:www-data /var/log/supervisor /run/php
-
-# Create data directories
-RUN mkdir -p /data/mysql /data/redis /data/meilisearch && \
     chown -R mysql:mysql /data/mysql && \
     chown -R redis:redis /data/redis && \
     chmod 700 /data/mysql
 
-# Expose main web port
+# Expose web server port
 EXPOSE 80
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:80/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:80/ || exit 1
 
-# Start all services
+# Start all services via entrypoint
 CMD ["/docker-entrypoint.sh"]
