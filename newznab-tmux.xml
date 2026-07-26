@@ -33,7 +33,7 @@ Recommended Requirements:
   <!-- Branding and Links -->
   <Category>Usenet</Category>
   <WebUI>http://[IP]:[PORT:8080]/</WebUI>
-  <TemplateVersion>4.0</TemplateVersion>
+  <TemplateVersion>5.0</TemplateVersion>
   <Icon>https://raw.githubusercontent.com/NNTmux/newznab-tmux/master/public/images/logo.png</Icon>
   <Support>https://github.com/NNTmux/newznab-tmux/discussions</Support>
   <Project>https://github.com/NNTmux/newznab-tmux</Project>
@@ -57,36 +57,24 @@ Recommended Requirements:
     </Publish>
   </Networking>
 
-  <!-- Storage Volumes - All services store data in separate mounted paths -->
+  <!-- Storage Volumes -->
   <Data>
+    <!-- Application Configuration (contains .env and app config) -->
     <Volume>
-      <HostDir>/mnt/user/appdata/newznab/</HostDir>
+      <HostDir>/mnt/user/appdata/newznab/config/</HostDir>
+      <ContainerDir>/config</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <!-- Usenet Storage (headers, metadata, NZB files) -->
+    <Volume>
+      <HostDir>/mnt/user/appdata/newznab/storage/</HostDir>
       <ContainerDir>/var/www/newznab/storage</ContainerDir>
       <Mode>rw</Mode>
     </Volume>
+    <!-- Service Data (database, cache, search index, logs) -->
     <Volume>
-      <HostDir>/mnt/user/appdata/newznab/config/</HostDir>
-      <ContainerDir>/var/www/newznab/config</ContainerDir>
-      <Mode>rw</Mode>
-    </Volume>
-    <Volume>
-      <HostDir>/mnt/user/appdata/newznab/nzbs/</HostDir>
-      <ContainerDir>/var/www/newznab/storage/nzbs</ContainerDir>
-      <Mode>rw</Mode>
-    </Volume>
-    <Volume>
-      <HostDir>/mnt/user/appdata/newznab/mysql/</HostDir>
-      <ContainerDir>/data/mysql</ContainerDir>
-      <Mode>rw</Mode>
-    </Volume>
-    <Volume>
-      <HostDir>/mnt/user/appdata/newznab/redis/</HostDir>
-      <ContainerDir>/data/redis</ContainerDir>
-      <Mode>rw</Mode>
-    </Volume>
-    <Volume>
-      <HostDir>/mnt/user/appdata/newznab/meilisearch/</HostDir>
-      <ContainerDir>/data/meilisearch</ContainerDir>
+      <HostDir>/mnt/user/appdata/newznab/data/</HostDir>
+      <ContainerDir>/data</ContainerDir>
       <Mode>rw</Mode>
     </Volume>
   </Data>
@@ -129,6 +117,14 @@ Recommended Requirements:
   <Date>2025-01-26</Date>
   <GitHub>https://github.com/NNTmux/newznab-tmux</GitHub>
   <Changes>
+v5.0 - Simplified Volume Structure
+- Consolidated 6 volumes to 3 clean directories
+- /config → Application configuration (.env, app config)
+- /storage → Usenet data (headers, metadata, NZBs)
+- /data → Service data (mysql, redis, meilisearch, logs)
+- Matches docker-compose structure for consistency
+- Easier to navigate and manage on host system
+
 v4.0 - Unraid Native Network Support
 - Uses Unraid custom network mode for maximum flexibility
 - Support for both port binding (bridge) and static IP (br0)
