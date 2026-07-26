@@ -117,8 +117,20 @@ export MEILISEARCH_MASTER_KEY
 # ============================================================================
 SETUP_FILE="/config/.setup-complete"
 
+# Check if setup is needed (first run OR if tables don't exist)
+SETUP_NEEDED=0
 if [ ! -f "$SETUP_FILE" ]; then
-    echo "⚙️  Setting up database and application (first run only)..."
+    SETUP_NEEDED=1
+else
+    # Verify tables actually exist (migrations might have failed)
+    if ! mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SELECT 1 FROM settings LIMIT 1" 2>/dev/null; then
+        echo "⚠️  Database tables missing - re-running setup..."
+        SETUP_NEEDED=1
+    fi
+fi
+
+if [ $SETUP_NEEDED -eq 1 ]; then
+    echo "⚙️  Setting up database and application..."
     echo ""
 
     # Ensure www-data user exists
