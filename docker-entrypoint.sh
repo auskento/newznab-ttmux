@@ -59,6 +59,7 @@ if [ ! -f "$CREDENTIALS_FILE" ]; then
         sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" /config/.env
         sed -i "s|^MEILISEARCH_KEY=.*|MEILISEARCH_KEY=$MEILISEARCH_KEY|" /config/.env
         sed -i "s|^APP_KEY=\(.*\)|APP_KEY=$APP_KEY|" /config/.env
+        sed -i "s|^LOG_CHANNEL=.*|LOG_CHANNEL=stack|" /config/.env
 
         # Ensure values exist if they don't
         grep -q "^DB_HOST=" /config/.env || echo "DB_HOST=127.0.0.1" >> /config/.env
@@ -66,6 +67,8 @@ if [ ! -f "$CREDENTIALS_FILE" ]; then
         grep -q "^DB_PASSWORD=" /config/.env || echo "DB_PASSWORD=$DB_PASSWORD" >> /config/.env
         grep -q "^MEILISEARCH_KEY=" /config/.env || echo "MEILISEARCH_KEY=$MEILISEARCH_KEY" >> /config/.env
         grep -q "^APP_KEY=" /config/.env || echo "APP_KEY=$APP_KEY" >> /config/.env
+        grep -q "^LOG_CHANNEL=" /config/.env || echo "LOG_CHANNEL=stack" >> /config/.env
+        grep -q "^LOG_LEVEL=" /config/.env || echo "LOG_LEVEL=debug" >> /config/.env
     fi
 
     # Mark credentials as generated
