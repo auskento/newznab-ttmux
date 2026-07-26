@@ -307,22 +307,18 @@ EOF
         mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES" 2>/dev/null || echo "    (could not query tables)"
     fi
 
-    # Only run seeding and admin creation if migrations succeeded
+    # Only run seeding if migrations succeeded
     if [ $TABLES_EXIST -eq 1 ]; then
         echo "  Seeding initial data..."
         cd /var/www/newznab && php artisan db:seed --force 2>&1 | head -20 || true
 
-        echo "  Creating admin user..."
-        cd /var/www/newznab && php artisan nntmux:create-admin \
-            --name="Administrator" \
-            --email="admin@localhost" \
-            --username="admin" \
-            --password="$ADMIN_PASSWORD" \
-            --force 2>&1 | head -10 || true
-
         # Mark setup as complete ONLY if migrations succeeded
         touch "$SETUP_FILE"
         echo "  ✓ Setup complete"
+        echo ""
+        echo "  ℹ️  Admin user setup:"
+        echo "     Create your first admin account through the web interface"
+        echo "     at http://localhost:8080 during initial setup"
     else
         echo "  ✗ Setup incomplete - tables not created"
         echo "  Will retry on next container start"
