@@ -255,16 +255,26 @@ if [ $SETUP_NEEDED -eq 1 ]; then
         ln -sf /config/.env /var/www/newznab/.env
     fi
 
+    # Ensure bootstrap cache directory exists and is writable
+    mkdir -p /config/bootstrap-cache
+    chmod 755 /config/bootstrap-cache
+    chown www-data:www-data /config/bootstrap-cache
+
     echo ""
     echo "  Running database migrations..."
     cd /var/www/newznab
 
-    # Show PHP output for debugging
-    if php artisan migrate --force 2>&1 | tee /tmp/migrate.log; then
+    # Clear config cache before migrations to prevent DB access during bootstrap
+    rm -f /config/bootstrap-cache/config.php /config/bootstrap-cache/services.php 2>/dev/null || true
+
+    # Run migrations with no-interaction to prevent hangs
+    if php artisan migrate --force --no-interaction 2>&1 | tee /tmp/migrate.log; then
         echo "  ✓ Migrations completed successfully"
     else
         MIGRATE_EXIT=$?
         echo "  ⚠️  Migration exit code: $MIGRATE_EXIT"
+        echo "  Database connection test:"
+        mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES" 2>/dev/null || echo "    Connection failed"
         echo "  Last 20 lines of migration output:"
         tail -20 /tmp/migrate.log
     fi
