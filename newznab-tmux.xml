@@ -76,15 +76,11 @@ Recommended Requirements:
   <!-- User Configuration -->
   <Config Name="Web Port" Target="8080" Default="8080" Mode="rw" Type="Port" Display="always" Required="true" Description="Port for web interface">8080</Config>
 
-  <Config Name="Appdata Path" Target="/mnt/user/appdata/newznab/" Default="/mnt/user/appdata/newznab/" Mode="rw" Type="Path" Display="always" Required="true" Description="Path for application data, database, cache, and all services">/mnt/user/appdata/newznab/</Config>
+  <Config Name="App URL" Target="APP_URL" Default="http://localhost:8080" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="Full URL of your Newznab instance (optional, for notifications)">http://localhost:8080</Config>
 
-  <Config Name="App URL" Target="APP_URL" Default="http://localhost:8080" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="Full URL of your Newznab instance (optional)">http://localhost:8080</Config>
-
-  <Config Name="PHP Memory Limit" Target="PHP_MEMORY_LIMIT" Default="512M" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="PHP memory limit (increase for large indexes)">512M</Config>
+  <Config Name="PHP Memory Limit" Target="PHP_MEMORY_LIMIT" Default="2048M" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="PHP memory limit (increase for large indexes)">2048M</Config>
 
   <Config Name="PHP Max Execution Time" Target="PHP_MAX_EXECUTION_TIME" Default="300" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="PHP maximum execution time in seconds">300</Config>
-
-  <Config Name="Meilisearch API Key" Target="MEILISEARCH_KEY" Default="changeme" Mode="rw" Type="Variable" Display="advanced" Required="false" Mask="true" Description="Meilisearch API key (auto-generated on first run if not set)">changeme</Config>
 
   <!-- Environment Variables -->
   <Environment>
