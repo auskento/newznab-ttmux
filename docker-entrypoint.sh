@@ -94,6 +94,12 @@ if [ ! -f "$SETUP_FILE" ]; then
     echo "⚙️  Setting up database and application (first run only)..."
     echo ""
 
+    # Ensure www-data user exists
+    if ! id www-data &>/dev/null; then
+        useradd -r -s /bin/false www-data
+        echo "  Created www-data user"
+    fi
+
     # Test PHP configuration
     echo "  🧪 PHP Configuration Test:"
     echo "     Version: $(/usr/bin/php -v | head -1)"
@@ -101,6 +107,16 @@ if [ ! -f "$SETUP_FILE" ]; then
     echo "     Loaded Extensions: $(/usr/bin/php -m | wc -l) extensions"
     echo "     Key Settings:"
     /usr/bin/php -r "echo '       memory_limit: ' . ini_get('memory_limit') . PHP_EOL; echo '       max_execution_time: ' . ini_get('max_execution_time') . PHP_EOL; echo '       upload_max_filesize: ' . ini_get('upload_max_filesize') . PHP_EOL; echo '       post_max_size: ' . ini_get('post_max_size') . PHP_EOL;"
+
+    # Fix permissions for PHP-FPM
+    echo "  Verifying system permissions..."
+    mkdir -p /run/php
+    chown -R www-data:www-data /run/php
+    chmod 755 /run/php
+    mkdir -p /var/log
+    touch /var/log/php-errors.log
+    chown www-data:www-data /var/log/php-errors.log
+    chmod 664 /var/log/php-errors.log
     echo ""
 
     # Start services temporarily for setup
