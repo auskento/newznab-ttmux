@@ -177,27 +177,47 @@ if [ ! -f "$SETUP_FILE" ]; then
         rm /data/mysql/.fresh-install
     fi
 
-    # Test database connection as newznab user
-    echo "  Testing database connection..."
-    if ! mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SELECT 1" 2>/dev/null; then
-        echo "  ⚠️  Database connection failed for newznab@127.0.0.1"
-        echo "     Attempting with localhost..."
-        if ! mysql -u newznab -p"$DB_PASSWORD" -h localhost nntmux -e "SELECT 1" 2>/dev/null; then
-            echo "  ✗ Database connection failed - both 127.0.0.1 and localhost"
-            kill $SUPERVISOR_PID
-            exit 1
+    # Test database connection as newznab user (with retries)
+    echo "  Testing database connection as newznab user..."
+    DB_READY=0
+    for i in {1..10}; do
+        if mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SELECT 1" 2>/dev/null; then
+            echo "  ✓ Database connection successful on attempt $i"
+            DB_READY=1
+            break
         fi
-    else
-        echo "  ✓ Database connection successful"
+        if [ $i -lt 10 ]; then
+            echo "  Attempt $i failed, retrying..."
+            sleep 1
+        fi
+    done
+
+    if [ $DB_READY -ne 1 ]; then
+        echo "  ✗ Database connection failed after 10 attempts"
+        echo "  Checking if database user exists..."
+        if mysql -u root -e "SELECT USER FROM mysql.user WHERE User='newznab'" 2>/dev/null | grep -q newznab; then
+            echo "  User 'newznab' exists in database"
+        else
+            echo "  User 'newznab' NOT found in database"
+        fi
+        kill $SUPERVISOR_PID 2>/dev/null || true
+        exit 1
     fi
 
     echo ""
     echo "  Verifying .env configuration..."
     if [ -f "/config/.env" ]; then
         echo "  Database config in .env:"
-        grep "^DB_" /config/.env || echo "    No DB_ variables found"
+        grep "^DB_" /config/.env 2>/dev/null || echo "    No DB_ variables found"
     else
         echo "  ⚠️  .env file not found at /config/.env"
+    fi
+
+    # Verify Laravel .env is readable from app directory
+    if [ ! -L "/var/www/newznab/.env" ]; then
+        echo "  ⚠️  Symlink /var/www/newznab/.env does not exist"
+        echo "  Creating symlink..."
+        ln -sf /config/.env /var/www/newznab/.env
     fi
 
     echo ""
@@ -205,17 +225,23 @@ if [ ! -f "$SETUP_FILE" ]; then
     cd /var/www/newznab
 
     # Show PHP output for debugging
-    php artisan migrate --force 2>&1 | tee /tmp/migrate.log
-    MIGRATE_EXIT=${PIPESTATUS[0]}
-
-    if [ $MIGRATE_EXIT -ne 0 ]; then
+    if php artisan migrate --force 2>&1 | tee /tmp/migrate.log; then
+        echo "  ✓ Migrations completed successfully"
+    else
+        MIGRATE_EXIT=$?
         echo "  ⚠️  Migration exit code: $MIGRATE_EXIT"
+        echo "  Last 20 lines of migration output:"
+        tail -20 /tmp/migrate.log
     fi
 
     # Verify tables were created
-    if ! mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES LIKE 'settings'" 2>/dev/null | grep -q settings; then
-        echo "  ⚠️  Settings table not found after migration - retrying..."
-        php artisan migrate:refresh --seed --force 2>&1 | head -20 || true
+    echo "  Checking if tables were created..."
+    if mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES" 2>/dev/null | grep -q settings; then
+        echo "  ✓ Settings table exists"
+    else
+        echo "  ⚠️  Settings table not found - migrations may have failed"
+        echo "  Tables in database:"
+        mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES" 2>/dev/null || echo "    (could not query tables)"
     fi
 
     echo "  Seeding initial data..."
