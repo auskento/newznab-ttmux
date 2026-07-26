@@ -57,23 +57,15 @@ Recommended Requirements:
     </Publish>
   </Networking>
 
-  <!-- Storage Volumes -->
-  <Volumes>
-    <Volume>
-      <HostDir>/mnt/user/appdata/newznab/</HostDir>
-      <ContainerDir>/config</ContainerDir>
-      <Mode>rw</Mode>
-    </Volume>
-    <Volume>
-      <HostDir>/mnt/user/appdata/newznab/data/</HostDir>
-      <ContainerDir>/data</ContainerDir>
-      <Mode>rw</Mode>
-    </Volume>
-  </Volumes>
+  <!-- Storage Paths -->
+  <Config Name="Config Path" Target="/config" Default="/mnt/user/appdata/newznab/" Mode="rw" Type="Path" Display="always" Required="true" Description="Path for application configuration and storage">/mnt/user/appdata/newznab/</Config>
 
-  <!-- User Configuration -->
+  <Config Name="Data Path" Target="/data" Default="/mnt/user/appdata/newznab/data/" Mode="rw" Type="Path" Display="always" Required="true" Description="Path for database, cache, search index, and logs">/mnt/user/appdata/newznab/data/</Config>
+
+  <!-- Web Interface -->
   <Config Name="Web Port" Target="8080" Default="8080" Mode="rw" Type="Port" Display="always" Required="true" Description="Port for web interface">8080</Config>
 
+  <!-- Application Settings -->
   <Config Name="App URL" Target="APP_URL" Default="http://localhost:8080" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="Full URL of your Newznab instance (optional, for notifications)">http://localhost:8080</Config>
 
   <Config Name="PHP Memory Limit" Target="PHP_MEMORY_LIMIT" Default="2048M" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="PHP memory limit (increase for large indexes)">2048M</Config>
