@@ -319,15 +319,6 @@ EOF
         mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES" 2>/dev/null || echo "    (could not query tables)"
     fi
 
-    # Create cache_locks table if missing (required by Laravel scheduler)
-    if [ $TABLES_EXIST -eq 1 ]; then
-        if ! mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES LIKE 'cache_locks'" 2>/dev/null | grep -q cache_locks; then
-            echo "  Creating cache_locks table..."
-            mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "CREATE TABLE IF NOT EXISTS cache_locks (key varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL, owner varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL, expiration int NOT NULL, PRIMARY KEY (key), KEY cache_locks_expiration_index (expiration)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;" 2>&1 || true
-            echo "  ✓ cache_locks table created"
-        fi
-    fi
-
     # Only run seeding if migrations succeeded AND seeding hasn't been done before
     if [ $TABLES_EXIST -eq 1 ]; then
         if [ ! -f "$SEEDING_FILE" ]; then
@@ -337,6 +328,15 @@ EOF
             echo "  ✓ Seeding complete"
         else
             echo "  ✓ Database already seeded - skipping"
+        fi
+
+        # Create cache_locks table if missing (required by Laravel scheduler)
+        echo "  Creating cache_locks table if needed..."
+        mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "CREATE TABLE IF NOT EXISTS cache_locks (key varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL, owner varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL, expiration int NOT NULL, PRIMARY KEY (key), KEY cache_locks_expiration_index (expiration)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci" 2>&1
+        if mysql -u newznab -p"$DB_PASSWORD" -h 127.0.0.1 nntmux -e "SHOW TABLES LIKE 'cache_locks'" 2>/dev/null | grep -q cache_locks; then
+            echo "  ✓ cache_locks table exists"
+        else
+            echo "  ⚠️  Warning: cache_locks table creation may have failed"
         fi
 
         # Mark setup as complete ONLY if migrations succeeded
