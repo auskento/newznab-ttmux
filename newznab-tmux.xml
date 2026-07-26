@@ -33,7 +33,7 @@ Recommended Requirements:
   <!-- Branding and Links -->
   <Category>Usenet</Category>
   <WebUI>http://[IP]:[PORT:8080]/</WebUI>
-  <TemplateVersion>3.0</TemplateVersion>
+  <TemplateVersion>4.0</TemplateVersion>
   <Icon>https://raw.githubusercontent.com/NNTmux/newznab-tmux/master/public/images/logo.png</Icon>
   <Support>https://github.com/NNTmux/newznab-tmux/discussions</Support>
   <Project>https://github.com/NNTmux/newznab-tmux</Project>
@@ -41,13 +41,13 @@ Recommended Requirements:
   <Donate>https://github.com/sponsors/NNTmux</Donate>
 
   <!-- Container Configuration -->
-  <Network>bridge</Network>
+  <Network>custom</Network>
   <Privileged>false</Privileged>
   <Shell>bash</Shell>
 
   <!-- Networking -->
   <Networking>
-    <Mode>bridge</Mode>
+    <Mode>custom</Mode>
     <Publish>
       <Port>
         <HostPort>8080</HostPort>
@@ -96,9 +96,11 @@ Recommended Requirements:
 
   <Config Name="Appdata Path" Target="/mnt/user/appdata/newznab/" Default="/mnt/user/appdata/newznab/" Mode="rw" Type="Path" Display="always" Required="true" Description="Path for application data, database, cache, and all services">/mnt/user/appdata/newznab/</Config>
 
-  <Config Name="Container Network Subnet" Target="CONTAINER_SUBNET" Default="172.20.0.0/16" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="(ADVANCED) Docker network subnet for static IP. Use non-overlapping subnet (e.g., 172.20.0.0/16, not your existing network)">172.20.0.0/16</Config>
+  <Config Name="Network Type" Target="NetworkType" Default="bridge" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="Network mode: 'bridge' for port mapping (8080) or 'br0' for static IP on br0 bridge">bridge</Config>
 
-  <Config Name="Container Static IP" Target="CONTAINER_IP" Default="172.20.0.10" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="(ADVANCED) Static container IP within the subnet. Requires both subnet fields filled. Use docker-compose.static-ip.yml if needed.">172.20.0.10</Config>
+  <Config Name="Container IP Address" Target="IPAddress" Default="" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="(Optional) Static IP for container within your network (e.g., 192.168.9.225). Only use with br0 network mode. Leave empty for automatic assignment."></Config>
+
+  <Config Name="MAC Address" Target="MacAddress" Default="" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="(Optional) MAC address for static IP assignment. Leave empty for automatic."></Config>
 
   <Config Name="App URL" Target="APP_URL" Default="http://localhost:8080" Mode="rw" Type="Variable" Display="advanced" Required="false" Description="Full URL of your Newznab instance (optional)">http://localhost:8080</Config>
 
@@ -133,13 +135,20 @@ Recommended Requirements:
   <Date>2025-01-26</Date>
   <GitHub>https://github.com/NNTmux/newznab-tmux</GitHub>
   <Changes>
+v4.0 - Unraid Native Network Support
+- Uses Unraid custom network mode for maximum flexibility
+- Support for both port binding (bridge) and static IP (br0)
+- Static IP works within your existing network range (e.g., 192.168.9.x)
+- Simplified Unraid template configuration
+- Works seamlessly with Unraid's bridge assignment
+- Auto-credentials on first run with all passwords displayed in logs
+
 v3.0 - Auto-credentials and configurable static IP
 - Runtime-configurable static IP address
 - Auto-generate admin user and service passwords on first run
 - Display all credentials in container logs
 - Secure password generation (16+ char alphanumeric)
 - Credentials stored in .env.generated for reference
-- Compatible with Unraid static IP configuration
 
 v2.0 - All-in-one self-contained container
 - Single container with all services
