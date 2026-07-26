@@ -59,13 +59,11 @@ Recommended Requirements:
 
   <!-- Storage Volumes -->
   <Data>
-    <!-- Application Data (config, .env, storage, bootstrap cache) -->
     <Volume>
       <HostDir>/mnt/user/appdata/newznab/</HostDir>
       <ContainerDir>/config</ContainerDir>
       <Mode>rw</Mode>
     </Volume>
-    <!-- Persistent Service Data (database, cache, search index, logs) -->
     <Volume>
       <HostDir>/mnt/user/appdata/newznab/data/</HostDir>
       <ContainerDir>/data</ContainerDir>
