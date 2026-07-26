@@ -17,6 +17,8 @@ echo "📦 Initializing MariaDB..."
 if [ ! -d "/data/mysql/mysql" ]; then
     echo "  Creating MariaDB data directory..."
     mysql_install_db --user=mysql --datadir=/data/mysql --skip-test-db
+    echo "  Marking first run..."
+    touch /data/mysql/.fresh-install
 fi
 
 # ============================================================================
@@ -81,6 +83,70 @@ else
     source "$CREDENTIALS_FILE"
     echo "  Credentials generated at: $GENERATED_AT"
     echo ""
+fi
+
+# ============================================================================
+# Database Setup on First Run
+# ============================================================================
+SETUP_FILE="/var/www/newznab/.setup-complete"
+
+if [ ! -f "$SETUP_FILE" ]; then
+    echo "⚙️  Setting up database and application (first run only)..."
+    echo ""
+
+    # Start services temporarily for setup
+    /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
+    SUPERVISOR_PID=$!
+
+    # Wait for MariaDB to be ready
+    echo "  ⏳ Waiting for MariaDB to be ready..."
+    for i in {1..30}; do
+        if mysqladmin ping -h127.0.0.1 -uroot 2>/dev/null; then
+            echo "  ✓ MariaDB is ready"
+            break
+        fi
+        if [ $i -eq 30 ]; then
+            echo "  ✗ MariaDB failed to start"
+            kill $SUPERVISOR_PID
+            exit 1
+        fi
+        sleep 1
+    done
+
+    # Create database and user (only on first run)
+    if [ -f "/data/mysql/.fresh-install" ]; then
+        echo "  Creating database and user..."
+        mysql -h127.0.0.1 -uroot -e "CREATE DATABASE IF NOT EXISTS nntmux CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+        mysql -h127.0.0.1 -uroot -e "CREATE USER IF NOT EXISTS 'newznab'@'127.0.0.1' IDENTIFIED BY '$DB_PASSWORD';"
+        mysql -h127.0.0.1 -uroot -e "GRANT ALL PRIVILEGES ON nntmux.* TO 'newznab'@'127.0.0.1';"
+        mysql -h127.0.0.1 -uroot -e "FLUSH PRIVILEGES;"
+        rm /data/mysql/.fresh-install
+    fi
+
+    echo ""
+    echo "  Running database migrations..."
+    cd /var/www/newznab && php artisan migrate --force --quiet
+
+    echo "  Seeding initial data..."
+    cd /var/www/newznab && php artisan db:seed --force --quiet
+
+    echo "  Creating admin user..."
+    cd /var/www/newznab && php artisan nntmux:create-admin \
+        --name="Administrator" \
+        --email="admin@localhost" \
+        --username="admin" \
+        --password="$ADMIN_PASSWORD" \
+        --quiet 2>/dev/null || true
+
+    # Mark setup as complete
+    touch "$SETUP_FILE"
+
+    echo "  ✓ Setup complete"
+    echo ""
+
+    # Stop supervisord and let it restart fresh
+    kill $SUPERVISOR_PID
+    sleep 2
 fi
 
 # ============================================================================
